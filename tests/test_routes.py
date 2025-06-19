@@ -25,17 +25,20 @@ from unittest import TestCase
 from wsgi import app
 from service.common import status
 from service.wishlist import db, Wishlist
+from tests.factories import WishlistFactory
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
 )
+
+BASE_URL = "/wishlists"
 
 
 ######################################################################
 #  T E S T   C A S E S
 ######################################################################
 # pylint: disable=too-many-public-methods
-class TestYourResourceService(TestCase):
+class TestWishlistService(TestCase):
     """REST API Server Tests"""
 
     @classmethod
@@ -71,5 +74,72 @@ class TestYourResourceService(TestCase):
         """It should call the home page"""
         resp = self.client.get("/")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+    # ----------------------------------------------------------
+    # TEST CREATE
+    # ----------------------------------------------------------
+    def test_create_wishlist(self):
+        """It should Create a new Wishlist"""
+        test_wishlist = WishlistFactory()
+        logging.debug("Test Wishlist: %s", test_wishlist.serialize())
+        response = self.client.post(BASE_URL, json=test_wishlist.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # Make sure location header is set
+        location = response.headers.get("Location", None)
+        self.assertIsNotNone(location)
+
+        # Check the data is correct
+        new_wishlist = response.get_json()
+        self.assertEqual(new_wishlist["name"], test_wishlist.name)
+        self.assertEqual(new_wishlist["customer_id"], test_wishlist.customer_id)
+        self.assertEqual(new_wishlist["description"], test_wishlist.description)
+        self.assertEqual(new_wishlist["is_public"], test_wishlist.is_public)
+
+
+######################################################################
+#  T E S T   S A D   P A T H S
+######################################################################
+class TestSadPaths(TestCase):
+    """Test REST Exception Handling"""
+
+    def setUp(self):
+        """Runs before each test"""
+        self.client = app.test_client()
+
+    def test_create_wishlist_no_data(self):
+        """It should not Create a Wishlist with missing data"""
+        response = self.client.post(BASE_URL, json={})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_wishlist_no_content_type(self):
+        """It should not Create a Wishlist with no content type"""
+        response = self.client.post(BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+
+    def test_create_wishlist_wrong_content_type(self):
+        """It should not Create a Wishlist with the wrong content type"""
+        response = self.client.post(BASE_URL, data="hello", content_type="text/html")
+        self.assertEqual(response.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+
+    def test_create_wishlist_bad_is_public(self):
+        """It should not Create a Wishlist with bad is_public data"""
+        test_wishlist = WishlistFactory()
+        # change is_public to a string
+        test_wishlist.is_public = "true"
+        response = self.client.post(BASE_URL, json=test_wishlist.serialize())
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_wishlist_missing_name(self):
+        """It should not Create a Wishlist without name"""
+        wishlist_data = {"customer_id": "customer123", "description": "Missing name"}
+        response = self.client.post(BASE_URL, json=wishlist_data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_wishlist_missing_customer_id(self):
+        """It should not Create a Wishlist without customer_id"""
+        wishlist_data = {"name": "Test Wishlist", "description": "Missing customer_id"}
+        response = self.client.post(BASE_URL, json=wishlist_data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     # Todo: Add your test cases here...
