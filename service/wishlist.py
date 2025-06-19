@@ -11,6 +11,7 @@ db = SQLAlchemy()
 class DataValidationError(Exception):
     """Used for an data validation errors when deserializing"""
 
+
 ######################################################################
 # WISHLIST
 ######################################################################
@@ -37,28 +38,36 @@ class Wishlist(db.Model):
     name = db.Column(db.String(255), nullable=False)
     description = db.Column(db.String(255))
     customer_id = db.Column(db.String(255), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow) # Timestamp for creation
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow) # Timestamp for last update
+    # Timestamp for creation
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    # Timestamp for last update
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
     is_public = db.Column(db.Boolean, default=False)
-    wishlist_items = db.relationship('WishlistItem', backref='wishlist', lazy=True, cascade='all, delete-orphan')
+    wishlist_items = db.relationship(
+        "WishlistItem", backref="wishlist", lazy=True, cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
-        created_at_str = self.created_at.isoformat() if self.created_at else 'None'
-        updated_at_str = self.updated_at.isoformat() if self.updated_at else 'None'
+        created_at_str = self.created_at.isoformat() if self.created_at else "None"
+        updated_at_str = self.updated_at.isoformat() if self.updated_at else "None"
 
         # Use repr() for string fields to include quotes and handle special characters
         name_repr = repr(self.name)
-        description_repr = repr(self.description) if self.description is not None else 'None'
+        description_repr = (
+            repr(self.description) if self.description is not None else "None"
+        )
 
         return (
             f"Wishlist("
             f"id={self.id}, "
             f"name={name_repr}, "
             f"customer_id={self.customer_id}, "
-            f"description={description_repr}, " # Use the repr-safe description
+            f"description={description_repr}, "  # Use the repr-safe description
             f"created_at={created_at_str}, "
             f"updated_at={updated_at_str}, "
-            f"is_public={self.is_public}" # is_public is already a boolean, no need for quotes
+            f"is_public={self.is_public}"  # is_public is already a boolean, no need for quotes
             f")"
         )
 
@@ -80,25 +89,40 @@ class Wishlist(db.Model):
 
     def deserialize(self, data):
         try:
-            # Required fields
             self.name = data["name"]
             self.customer_id = data["customer_id"]
-            # Optional fields with default values
             self.description = data.get("description")
-            self.is_public = data.get("is_public", False)
-            items_data = data.get("items", []) 
+
+            # Add proper boolean type checking (like Pet example)
+            if "is_public" in data:
+                if isinstance(data["is_public"], bool):
+                    self.is_public = data["is_public"]
+                else:
+                    raise DataValidationError(
+                        "Invalid type for boolean [is_public]: "
+                        + str(type(data["is_public"]))
+                    )
+            else:
+                self.is_public = False
+
+            # Fix: Use "wishlist_items" not "items" to match serialize method
+            items_data = data.get("wishlist_items", [])
             if not isinstance(items_data, list):
-                raise DataValidationError("items must be a list of Wishlist Items")
-            self.items = [] 
+                raise DataValidationError(
+                    "wishlist_items must be a list of Wishlist Items"
+                )
+
+            # Fix: Use self.wishlist_items not self.items
+            self.wishlist_items = []
             for item_data in items_data:
                 wishlist_item = WishlistItem()
-                # Deserializing the item. No need to set wishlist_id here,
-                # SQLAlchemy handles it when appending to self.items
                 wishlist_item.deserialize(item_data)
-                self.items.append(wishlist_item) # Append to the relationship collection
+                self.wishlist_items.append(wishlist_item)
 
         except KeyError as error:
-            raise DataValidationError(f"Invalid Wishlist: missing required field - {error.args[0]}") from error
+            raise DataValidationError(
+                f"Invalid Wishlist: missing required field - {error.args[0]}"
+            ) from error
         except TypeError as error:
             raise DataValidationError(
                 "Invalid Wishlist: body of request contained bad or no data "
@@ -106,10 +130,14 @@ class Wishlist(db.Model):
             ) from error
         except ValueError as error:
             # Catch ValueError if fromisoformat is used or other parsing errors
-            raise DataValidationError(f"Invalid data format for a field: {error}") from error
+            raise DataValidationError(
+                f"Invalid data format for a field: {error}"
+            ) from error
         except AttributeError as error:
             # Catch AttributeError for cases like accessing properties on None or incorrect types
-            raise DataValidationError(f"Invalid attribute or data structure: {error}") from error
+            raise DataValidationError(
+                f"Invalid attribute or data structure: {error}"
+            ) from error
         return self
 
     def create(self) -> None:
@@ -209,7 +237,7 @@ class WishlistItem(db.Model):
     updated_at = db.Column(
         db.DateTime, default=db.func.now(), onupdate=db.func.now(), nullable=False
     )
-    quantity = db.Column(db.Integer, nullable=False, default=1) 
+    quantity = db.Column(db.Integer, nullable=False, default=1)
 
     def __repr__(self):
         return (
@@ -243,7 +271,9 @@ class WishlistItem(db.Model):
         self.id = data.get("id", None)
         self.wishlist_id = data.get("wishlist_id", None)
         self.product_id = data.get("product_id", None)
-        self.quantity = data.get("quantity", 1) # Default to 1 if quantity is not provided
+        self.quantity = data.get(
+            "quantity", 1
+        )  # Default to 1 if quantity is not provided
         self.product_name = data.get("product_name", None)
         self.product_description = data.get("product_description", None)
         self.product_price = data.get("product_price", None)
