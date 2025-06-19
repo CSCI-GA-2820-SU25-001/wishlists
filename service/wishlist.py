@@ -23,12 +23,13 @@ Persistent Base class for Wishlist database CRUD functions
 import logging
 from .persistent_base import db, PersistentBase, DataValidationError
 from .wishlist_item import WishlistItem
+from datetime import datetime
 
 logger = logging.getLogger("flask.app")
 
 
 ######################################################################
-#  W I S H L I S T   M O D E L
+# WISHLIST
 ######################################################################
 class Wishlist(db.Model, PersistentBase):
     """
@@ -38,9 +39,9 @@ class Wishlist(db.Model, PersistentBase):
     id = primary key for Wishlist table
     name = user-assigned wishlist name
     description = a short note user can add for the wishlist
-    username = username of the customer who owns the wishlist
+    customer_id = customer_id of the customer who owns the wishlist
     created_at = timestamp field to store when wishlist was created
-    last_updated_at = timestamp field to store when wishlist was last updated
+    updated_at = timestamp field to store when wishlist was last updated
     is_public = boolean flag to check visibility of the wishlist
     """
 
@@ -50,27 +51,29 @@ class Wishlist(db.Model, PersistentBase):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False)
     description = db.Column(db.String(255))
-    username = db.Column(db.String(255), nullable=False)
-    created_at = db.Column(db.DateTime, default=db.func.now())
-    # last_updated_at = db.Column(db.DateTime, default=db.func.now())
-    last_updated_at = db.Column(
-        db.DateTime, default=db.func.now(), onupdate=db.func.now(), nullable=False
-    )
+    customer_id = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow) # Timestamp for creation
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow) # Timestamp for last update
     is_public = db.Column(db.Boolean, default=False)
-    wishlist_items = db.relationship(
-        "WishlistItem", backref="wishlist", passive_deletes=True
-    )
+    wishlist_items = db.relationship('WishlistItem', backref='wishlist', lazy=True, cascade='all, delete-orphan')
 
     def __repr__(self):
+        created_at_str = self.created_at.isoformat() if self.created_at else 'None'
+        updated_at_str = self.updated_at.isoformat() if self.updated_at else 'None'
+
+        # Use repr() for string fields to include quotes and handle special characters
+        name_repr = repr(self.name)
+        description_repr = repr(self.description) if self.description is not None else 'None'
+
         return (
             f"Wishlist("
             f"id={self.id}, "
-            f"name={self.name}, "
-            f"username={self.username}, "
-            f"description='{self.description}', "
-            f"created_at={self.created_at.isoformat()}, "
-            f"last_updated_at={self.last_updated_at.isoformat()}, "
-            f"is_public='{self.is_public}'"
+            f"name={name_repr}, "
+            f"customer_id={self.customer_id}, "
+            f"description={description_repr}, " # Use the repr-safe description
+            f"created_at={created_at_str}, "
+            f"updated_at={updated_at_str}, "
+            f"is_public={self.is_public}" # is_public is already a boolean, no need for quotes
             f")"
         )
 
@@ -80,9 +83,9 @@ class Wishlist(db.Model, PersistentBase):
             "id": self.id,
             "name": self.name,
             "description": self.description,
-            "username": self.username,
+            "customer_id": self.customer_id,
             "created_at": self.created_at.isoformat(),
-            "last_updated_at": self.last_updated_at.isoformat(),
+            "updated_at": self.updated_at.isoformat(),
             "is_public": self.is_public,
             "wishlist_items": [],
         }
@@ -91,31 +94,37 @@ class Wishlist(db.Model, PersistentBase):
         return wishlist
 
     def deserialize(self, data):
-        """
-        Populates an wishlist from a dictionary. data -> is a dictionary containing resource data
-        """
         try:
+            # Required fields
             self.name = data["name"]
-            self.username = data["username"]
-            self.description = data.get("description", None)
+            self.customer_id = data["customer_id"]
+            # Optional fields with default values
+            self.description = data.get("description")
             self.is_public = data.get("is_public", False)
-            # self.created_at = data.get("created_at", str(db.func.now()))
-            # self.last_updated_at = data.get("last_updated_at", str(db.func.now()))
-            # handle inner list of addresses
-            wishlist_items_items = data.get("wishlist_items", [])
-            for json_wishlists_items in wishlist_items_items:
+            items_data = data.get("items", []) 
+            if not isinstance(items_data, list):
+                raise DataValidationError("items must be a list of Wishlist Items")
+            self.items = [] 
+            for item_data in items_data:
                 wishlist_item = WishlistItem()
-                wishlist_item.deserialize(json_wishlists_items)
-                self.wishlist_items.append(wishlist_item)
+                # Deserializing the item. No need to set wishlist_id here,
+                # SQLAlchemy handles it when appending to self.items
+                wishlist_item.deserialize(item_data)
+                self.items.append(wishlist_item) # Append to the relationship collection
+
         except KeyError as error:
+            raise DataValidationError(f"Invalid Wishlist: missing required field - {error.args[0]}") from error
+        except TypeError as error:
             raise DataValidationError(
-                "Invalid Wishlist Item: missing " + error.args[0]
+                "Invalid Wishlist: body of request contained bad or no data "
+                f"or incorrect type for a field - {error}"
             ) from error
-        except (ValueError, TypeError) as error:
-            raise DataValidationError(
-                "Invalid Wishlist Item: body of request contained "
-                "bad or no data - " + error.args[0]
-            ) from error
+        except ValueError as error:
+            # Catch ValueError if fromisoformat is used or other parsing errors
+            raise DataValidationError(f"Invalid data format for a field: {error}") from error
+        except AttributeError as error:
+            # Catch AttributeError for cases like accessing properties on None or incorrect types
+            raise DataValidationError(f"Invalid attribute or data structure: {error}") from error
         return self
 
     @classmethod
@@ -125,7 +134,7 @@ class Wishlist(db.Model, PersistentBase):
         return cls.query.filter(cls.name == name).all()
 
     @classmethod
-    def find_for_user(cls, username):
+    def find_for_user(cls, customer_id):
         """Return all wishlists for a specific user"""
-        logger.info("Processing lookup for user %s ...", username)
-        return cls.query.filter(cls.username == username).all()
+        logger.info("Processing lookup for user %s ...", customer_id)
+        return cls.query.filter(cls.customer_id == customer_id).all()

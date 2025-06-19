@@ -6,12 +6,12 @@ from datetime import datetime, timezone
 
 from decimal import Decimal
 import factory
-from factory.fuzzy import FuzzyChoice, FuzzyDateTime
+from factory.fuzzy import FuzzyChoice, FuzzyDateTime, FuzzyInteger
 from service.wishlist import Wishlist, WishlistItem
 
 
 class WishlistFactory(factory.Factory):
-    """Creates fake wishlists that you don't have to feed"""
+    """Loading fake wishlists"""
 
     class Meta:  # pylint: disable=too-few-public-methods
         """Maps factory to data model"""
@@ -21,9 +21,9 @@ class WishlistFactory(factory.Factory):
     id = factory.Sequence(lambda n: n)
     name = factory.Faker("word")
     description = factory.Faker("sentence")
-    username = factory.Faker("word")
+    customer_id = factory.Faker("word")
     created_at = FuzzyDateTime(datetime(2000, 1, 1, tzinfo=timezone.utc))
-    last_updated_at = FuzzyDateTime(datetime(2000, 1, 1, tzinfo=timezone.utc))
+    updated_at = FuzzyDateTime(datetime(2000, 1, 1, tzinfo=timezone.utc))
     is_public = FuzzyChoice(choices=[True, False])
 
     @factory.post_generation
@@ -39,11 +39,11 @@ class WishlistFactory(factory.Factory):
 
 
 class WishlistItemFactory(factory.Factory):
-    """Creates fake wishlist items that you don't have to feed"""
+    """Loading fake wishlist items from factory"""
 
     # pylint: disable=too-few-public-methods
     class Meta:
-        """Maps factory to wishlist item data model"""
+        """Maps"""
 
         model = WishlistItem
 
@@ -52,6 +52,7 @@ class WishlistItemFactory(factory.Factory):
     product_id = factory.Faker("random_int", min=1, max=9999)
     product_name = factory.Faker("word")
     product_description = factory.Faker("sentence")
+    quantity = FuzzyInteger(1, 10) # Added quantity with a random integer between 1 and 10
     product_price = factory.Faker(
         "pydecimal",
         left_digits=4,
@@ -61,5 +62,5 @@ class WishlistItemFactory(factory.Factory):
         max_value=Decimal("1000.00"),
     )
     created_at = FuzzyDateTime(datetime(2000, 1, 1, tzinfo=timezone.utc))
-    last_updated_at = FuzzyDateTime(datetime(2000, 1, 1, tzinfo=timezone.utc))
+    updated_at = FuzzyDateTime(datetime(2000, 1, 1, tzinfo=timezone.utc))
     wishlist = factory.SubFactory(WishlistFactory)

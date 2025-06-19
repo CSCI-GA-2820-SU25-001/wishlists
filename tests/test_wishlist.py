@@ -59,16 +59,16 @@ class TestWishlist(TestCase):
         wishlist = Wishlist(
             name=fake_wishlist.name,
             is_public=fake_wishlist.is_public,
-            username=fake_wishlist.username,
+            customer_id=fake_wishlist.customer_id,
             description=fake_wishlist.description,
             created_at=fake_wishlist.created_at,
-            last_updated_at=fake_wishlist.last_updated_at,
+            updated_at=fake_wishlist.updated_at,
         )
         self.assertIsNotNone(wishlist)
         self.assertEqual(wishlist.id, None)
         self.assertEqual(wishlist.name, fake_wishlist.name)
-        self.assertEqual(wishlist.username, fake_wishlist.username)
+        self.assertEqual(wishlist.customer_id, fake_wishlist.customer_id)
         self.assertEqual(wishlist.description, fake_wishlist.description)
         self.assertEqual(wishlist.created_at, fake_wishlist.created_at)
-        self.assertEqual(wishlist.last_updated_at, fake_wishlist.last_updated_at)
+        self.assertEqual(wishlist.updated_at, fake_wishlist.updated_at)
         self.assertEqual(wishlist.wishlist_items, fake_wishlist.wishlist_items)

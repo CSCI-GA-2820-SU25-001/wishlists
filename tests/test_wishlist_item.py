@@ -90,8 +90,8 @@ class TestWishlistItem(TestCase):
             serial_wishlist_item["created_at"], wishlist_item.created_at.isoformat()
         )
         self.assertEqual(
-            serial_wishlist_item["last_updated_at"],
-            wishlist_item.last_updated_at.isoformat(),
+            serial_wishlist_item["updated_at"],
+            wishlist_item.updated_at.isoformat(),
         )
 
     def test_deserialize_a_wishlist_item(self):
