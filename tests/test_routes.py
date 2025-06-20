@@ -96,6 +96,25 @@ class TestWishlistService(TestCase):
         self.assertEqual(new_wishlist["description"], test_wishlist.description)
         self.assertEqual(new_wishlist["is_public"], test_wishlist.is_public)
 
+    # ----------------------------------------------------------
+    # TEST DELETE
+    # ----------------------------------------------------------
+    def test_delete_wishlist(self):
+        """It should delete a wishlist by ID"""
+        # create a wishlist
+        test_wishlist = WishlistFactory()
+        response = self.client.post(BASE_URL, json=test_wishlist.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        wishlist_id = response.get_json()["id"]
+
+        # delete this wishlist
+        delete_response = self.client.delete(f"{BASE_URL}/{wishlist_id}")
+        self.assertEqual(delete_response.status_code, status.HTTP_204_NO_CONTENT)
+
+        # check
+        get_response = self.client.get(f"{BASE_URL}/{wishlist_id}")
+        self.assertEqual(get_response.status_code, status.HTTP_404_NOT_FOUND)
+
 
 ######################################################################
 #  T E S T   S A D   P A T H S
