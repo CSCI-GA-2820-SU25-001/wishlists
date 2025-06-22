@@ -66,6 +66,22 @@ class TestWishlistService(TestCase):
         """This runs after each test"""
         db.session.remove()
 
+    def _create_wishlists(self, count):
+        """Factory method to create wishlists in bulk via API"""
+        wishlists = []
+        for _ in range(count):
+            wishlist = WishlistFactory()
+            resp = self.client.post(BASE_URL, json=wishlist.serialize())
+            self.assertEqual(
+                resp.status_code,
+                status.HTTP_201_CREATED,
+                "Could not create test Wishlist",
+            )
+            new_wishlist = resp.get_json()
+            wishlist.id = new_wishlist["id"]
+            wishlists.append(wishlist)
+        return wishlists
+
     ######################################################################
     #  P L A C E   T E S T   C A S E S   H E R E
     ######################################################################
@@ -114,6 +130,28 @@ class TestWishlistService(TestCase):
         # check
         get_response = self.client.get(f"{BASE_URL}/{wishlist_id}")
         self.assertEqual(get_response.status_code, status.HTTP_404_NOT_FOUND)
+
+    # ----------------------------------------------------------
+    # TEST READ
+    # ----------------------------------------------------------
+
+    def test_get_wishlist(self):
+        """It should retrieve a single wishlist successfully."""
+        # Create a wishlist using the helper
+        wishlist = self._create_wishlists(1)[0]
+
+        # Send a GET request
+        resp = self.client.get(
+            f"{BASE_URL}/{wishlist.id}", content_type="application/json"
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        # Validate response data
+        data = resp.get_json()
+        self.assertEqual(data["name"], wishlist.name)
+        self.assertEqual(data["customer_id"], wishlist.customer_id)
+        self.assertEqual(data["description"], wishlist.description)
+        self.assertEqual(data["is_public"], wishlist.is_public)
 
 
 ######################################################################
