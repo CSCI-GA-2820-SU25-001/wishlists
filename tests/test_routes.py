@@ -25,7 +25,7 @@ from unittest import TestCase
 from wsgi import app
 from service.common import status
 from service.wishlist import db, Wishlist
-from tests.factories import WishlistFactory
+from tests.factories import WishlistFactory, WishlistItemFactory
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
@@ -152,6 +152,68 @@ class TestWishlistService(TestCase):
         self.assertEqual(data["customer_id"], wishlist.customer_id)
         self.assertEqual(data["description"], wishlist.description)
         self.assertEqual(data["is_public"], wishlist.is_public)
+        
+    def test_add_wishlist_item(self):
+        """It should add an item to a wishlist"""
+        # Create a wishlist
+        wishlist = self._create_wishlists(1)[0]
+        wishlist_item = WishlistItemFactory()
+        resp = self.client.post(
+            f"{BASE_URL}/{wishlist.id}/wishlist_items",
+            json=wishlist_item.serialize(),
+            content_type="application/json"
+        )
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        
+        location = resp.headers.get("Location", None)
+        self.assertIsNotNone(location, "Location header should be set")
+        
+        data = resp.get_json()
+        logging.debug("Added Wishlist Item: %s", data)
+        self.assertEqual(data["wishlist_id"], wishlist.id)
+        self.assertEqual(data["product_id"], wishlist_item.product_id)
+        self.assertEqual(data["product_name"], wishlist_item.product_name)
+        self.assertEqual(data["product_description"], wishlist_item.product_description)
+        self.assertEqual(data["quantity"], wishlist_item.quantity)
+        self.assertEqual(data["product_price"], str(wishlist_item.product_price))
+        
+        # Check that the location header was correct by getting it
+        resp = self.client.get(location, content_type="application/json")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        new_wishlist_item = resp.get_json()
+        self.assertEqual(new_wishlist_item["product_id"], wishlist_item.product_id, "Product ID should match")
+        
+    def test_get_wishlist_items(self):
+        """It should Get an wishlist item from a wishlist"""
+        # Create a known wishlist item
+        wishlist = self._create_wishlists(1)[0]
+        wishlist_item = WishlistItemFactory()
+        resp = self.client.post(
+            f"{BASE_URL}/{wishlist.id}/wishlist_items",
+            json=wishlist_item.serialize(),
+            content_type="application/json"
+        )
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        
+        data = resp.get_json()
+        logging.debug(data)
+        wishlist_item_id = data["id"]
+        
+        # Retrieve it back
+        resp = self.client.get(
+            f"{BASE_URL}/{wishlist.id}/wishlist_items/{wishlist_item_id}",
+            content_type="application/json"
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        
+        data = resp.get_json()
+        logging.debug("Retrieved Wishlist Item: %s", data)
+        self.assertEqual(data["wishlist_id"], wishlist.id)
+        self.assertEqual(data["product_id"], wishlist_item.product_id)
+        self.assertEqual(data["product_name"], wishlist_item.product_name)
+        self.assertEqual(data["product_description"], wishlist_item.product_description)
+        self.assertEqual(data["quantity"], wishlist_item.quantity)
+        self.assertEqual(data["product_price"], str(wishlist_item.product_price))
 
 
 ######################################################################
