@@ -23,7 +23,7 @@ and Delete YourResourceModel
 
 from flask import jsonify, request, url_for, abort
 from flask import current_app as app  # Import Flask application
-from service.wishlist import Wishlist, DataValidationError
+from service.wishlist import Wishlist, WishlistItem, DataValidationError
 from service.common import status  # HTTP Status Codes
 
 
@@ -115,6 +115,67 @@ def delete_wishlist(wishlist_id):
 
     wishlist.delete()
     return "", 204
+
+######################################################################
+# ADD AN ITEM TO WISHLIST
+######################################################################
+@app.route("/wishlists/<int:wishlist_id>/wishlist_items", methods=["POST"])
+def add_item_to_wishlist(wishlist_id):
+    """
+    Add an item to a wishlist
+    This endpoint will add an item to a wishlist based on the wishlist ID.
+    """
+    app.logger.info("Request to create an Address for Account with id: %s", wishlist_id)
+    check_content_type("application/json")
+
+    # See if the account exists and abort if it doesn't
+    wishlist = Wishlist.find(wishlist_id)
+    if not wishlist:
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"Wishlist with id '{wishlist_id}' could not be found.",
+        )
+
+    # Create an item from the json data
+    wishlist_item = WishlistItem()
+    wishlist_item.deserialize(request.get_json())
+
+    # Append the address to the account
+    wishlist.wishlist_items.append(wishlist_item)
+    wishlist.update()
+
+    # Prepare a message to return
+    message = wishlist_item.serialize()
+
+    # Send the location to GET the new item
+    location_url = url_for(
+        "get_wishlist_item",
+        wishlist_id=wishlist.id,
+        wishlist_item_id=wishlist_item.id,
+        _external=True
+    )
+    return jsonify(message), status.HTTP_201_CREATED, {"Location": location_url}
+
+
+######################################################################
+# GET A WISHLIST ITEM
+######################################################################
+@app.route("/wishlists/<int:wishlist_id>/wishlist_items/<int:wishlist_item_id>", methods=["GET"])
+def get_wishlist_item(wishlist_id, wishlist_item_id):
+    """
+    Get a single wishlist item from a wishlist
+    """
+    app.logger.info("Request to get wishlist item %s from wishlist %s", wishlist_item_id, wishlist_id)
+    
+    # See if the wishlist item exists and abort if it doesn't
+    wishlist_item = WishlistItem.find(wishlist_item_id)
+    if not wishlist_item:
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"Wishlist item with id '{wishlist_item_id}' could not be found in wishlist '{wishlist_id}'.",
+        )
+        
+    return jsonify(wishlist_item.serialize()), status.HTTP_200_OK
 
 
 ######################################################################
