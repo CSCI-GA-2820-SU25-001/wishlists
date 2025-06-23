@@ -47,11 +47,22 @@ def index():
 # NOT FINISHED, JUST A SKELETON
 @app.route("/wishlists/<int:wishlist_id>", methods=["GET"])
 def get_wishlist(wishlist_id):
-    """Placeholder for GET wishlist - to be implemented by other team members"""
-    return (
-        jsonify({"message": f"GET /wishlists/{wishlist_id} not implemented yet"}),
-        status.HTTP_501_NOT_IMPLEMENTED,
-    )
+    """
+    Retrieve a single Wishlist
+
+    This endpoint will return a Wishlist based on its ID.
+    """
+    app.logger.info("Request for Wishlist with id: %s", wishlist_id)
+
+    # See if the wishlist exists and abort if it doesn't
+    wishlist = Wishlist.find(wishlist_id)
+    if not wishlist:
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"Wishlist with id '{wishlist_id}' could not be found.",
+        )
+
+    return jsonify(wishlist.serialize()), status.HTTP_200_OK
 
 
 ######################################################################

@@ -73,6 +73,20 @@ class TestWishlist(TestCase):
         self.assertEqual(wishlist.updated_at, fake_wishlist.updated_at)
         self.assertEqual(wishlist.wishlist_items, fake_wishlist.wishlist_items)
 
+    def test_read_wishlist(self):
+        """It should Read a wishlist"""
+        wishlist = WishlistFactory()
+        wishlist.create()
+
+        # Read it back
+        found_wishlist = Wishlist.find(wishlist.id)
+        self.assertEqual(found_wishlist.id, wishlist.id)
+        self.assertEqual(found_wishlist.name, wishlist.name)
+        self.assertEqual(found_wishlist.customer_id, wishlist.customer_id)
+        self.assertEqual(found_wishlist.description, wishlist.description)
+        self.assertEqual(found_wishlist.created_at, wishlist.created_at)
+        self.assertEqual(found_wishlist.updated_at, wishlist.updated_at)
+        self.assertEqual(found_wishlist.wishlist_items, [])
 
 
 ######################################################################
