@@ -215,6 +215,63 @@ class TestWishlistService(TestCase):
         self.assertEqual(data["quantity"], wishlist_item.quantity)
         self.assertEqual(data["product_price"], str(wishlist_item.product_price))
 
+    def test_update_wishlist_item(self):
+        """It should Update a wishlist item"""
+        # Create a known wishlist and item
+        wishlist = self._create_wishlists(1)[0]
+        item = WishlistItemFactory()
+        resp = self.client.post(
+            f"{BASE_URL}/{wishlist.id}/wishlist_items",
+            json=item.serialize(),
+            content_type="application/json",
+            )
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+
+        # Get the item data from the creation response
+        data = resp.get_json()
+        logging.debug("Original Wishlist Item: %s", data)
+        item_id = data["id"]
+        
+        # Update the item with new data
+        data["quantity"] = 10
+        data["product_name"] = "A new product name"
+        
+        resp = self.client.put(
+            f"{BASE_URL}/{wishlist.id}/items/{item_id}",
+            json=data,
+            content_type="application/json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        # Get the updated item and check the fields
+        updated_item = resp.get_json()
+        self.assertEqual(updated_item["id"], item_id)
+        self.assertEqual(updated_item["wishlist_id"], wishlist.id)
+        self.assertEqual(updated_item["quantity"], 10)
+        self.assertEqual(updated_item["product_name"], "A new product name")
+
+    def test_delete_wishlist_item(self):
+        """It should Delete a wishlist item"""
+        # Create a known wishlist and item
+        wishlist = self._create_wishlists(1)[0]
+        item = WishlistItemFactory()
+        # Add the item to the wishlist
+        resp = self.client.post(
+            f"{BASE_URL}/{wishlist.id}/wishlist_items",
+            json=item.serialize(),
+            content_type="application/json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        data = resp.get_json()
+        item_id = data["id"]
+
+        # Send a request to delete the item
+        resp = self.client.delete(f"{BASE_URL}/{wishlist.id}/items/{item_id}")
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+
+        # Verify the item is gone
+        resp = self.client.get(f"{BASE_URL}/{wishlist.id}/wishlist_items/{item_id}")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
 ######################################################################
 #  T E S T   S A D   P A T H S
