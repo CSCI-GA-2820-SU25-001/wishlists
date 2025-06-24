@@ -152,20 +152,6 @@ class TestWishlistItem(TestCase):
             wishlist_item.updated_at.isoformat(),
         )
 
-    def test_deserialize_a_wishlist_item(self):
-        """It should deserialize a wishlist item"""
-        wishlist_item = WishlistItemFactory()
-        wishlist_item.create()
-        new_wishlist_item = WishlistItem()
-        new_wishlist_item.deserialize(wishlist_item.serialize())
-        self.assertEqual(new_wishlist_item.wishlist_id, wishlist_item.wishlist_id)
-        self.assertEqual(new_wishlist_item.product_id, wishlist_item.product_id)
-        self.assertEqual(new_wishlist_item.product_name, wishlist_item.product_name)
-        self.assertEqual(
-            new_wishlist_item.product_description, wishlist_item.product_description
-        )
-        self.assertEqual(new_wishlist_item.product_price, wishlist_item.product_price)
-
     def test_add_wishlist_items(self):
         """It should create a wishlist and assert that it exists"""
         fake_wishlist = WishlistFactory()
@@ -187,3 +173,121 @@ class TestWishlistItem(TestCase):
         self.assertEqual(wishlist.created_at, fake_wishlist.created_at)
         self.assertEqual(wishlist.updated_at, fake_wishlist.updated_at)
         self.assertEqual(wishlist.wishlist_items, fake_wishlist.wishlist_items)
+
+    def test_serialize_a_wishlist(self):
+        """It should serialize a wishlist with items"""
+        wishlist = WishlistFactory()
+        item = WishlistItemFactory(wishlist=wishlist)
+        wishlist.wishlist_items.append(item)
+        wishlist.create()
+        serial = wishlist.serialize()
+        self.assertEqual(serial["id"], wishlist.id)
+        self.assertEqual(serial["name"], wishlist.name)
+        self.assertEqual(serial["customer_id"], wishlist.customer_id)
+        self.assertEqual(serial["is_public"], wishlist.is_public)
+        self.assertEqual(len(serial["wishlist_items"]), 1)
+        self.assertEqual(serial["wishlist_items"][0]["product_name"], item.product_name)
+
+    def test_deserialize_a_wishlist(self):
+        """It should deserialize a wishlist from a dict with items"""
+        wishlist = WishlistFactory()
+        item = WishlistItemFactory(wishlist=wishlist)
+        wishlist_dict = wishlist.serialize()
+        wishlist_dict["wishlist_items"] = [item.serialize()]
+        new_wishlist = Wishlist()
+        new_wishlist.deserialize(wishlist_dict)
+        self.assertEqual(new_wishlist.name, wishlist.name)
+        self.assertEqual(new_wishlist.customer_id, wishlist.customer_id)
+        self.assertEqual(len(new_wishlist.wishlist_items), 1)
+        self.assertEqual(new_wishlist.wishlist_items[0].product_name, item.product_name)
+        self.assertEqual(new_wishlist.wishlist_items[0].product_id, item.product_id)
+        self.assertEqual(new_wishlist.wishlist_items[0].quantity, item.quantity)
+        self.assertEqual(new_wishlist.wishlist_items[0].product_description, item.product_description)
+        self.assertEqual(float(new_wishlist.wishlist_items[0].product_price), float(item.product_price))
+
+    def test_delete_a_wishlist(self):
+        """It should delete a wishlist from the database"""
+        wishlist = WishlistFactory()
+        wishlist.create()
+        wishlist_id = wishlist.id
+        wishlist.delete()
+        self.assertIsNone(Wishlist.find(wishlist_id))
+
+    def test_find_by_name(self):
+        """It should find wishlists by name"""
+        wishlist = WishlistFactory(name="SpecialName")
+        wishlist.create()
+        found = Wishlist.find_by_name("SpecialName")
+        self.assertGreaterEqual(len(found), 1)
+        self.assertEqual(found[0].name, "SpecialName")
+
+    def test_find_for_user(self):
+        """It should find wishlists for a specific user"""
+        wishlist = WishlistFactory(customer_id="user123")
+        wishlist.create()
+        found = Wishlist.find_for_user("user123")
+        self.assertGreaterEqual(len(found), 1)
+        self.assertEqual(found[0].customer_id, "user123")
+
+    def test_deserialize_wishlist_key_error(self):
+        """It should raise DataValidationError for missing required fields"""
+        wishlist = Wishlist()
+        with self.assertRaises(DataValidationError):
+            wishlist.deserialize({})
+
+    def test_deserialize_wishlist_type_error(self):
+        """It should raise DataValidationError for wrong type"""
+        wishlist = Wishlist()
+        with self.assertRaises(DataValidationError):
+            wishlist.deserialize([])
+
+    def test_deserialize_wishlist_items_type_error(self):
+        """It should raise DataValidationError if wishlist_items is not a list"""
+        wishlist = Wishlist()
+        data = {
+            "name": "Test",
+            "customer_id": "c1",
+            "wishlist_items": "notalist"
+        }
+        with self.assertRaises(DataValidationError):
+            wishlist.deserialize(data)
+
+    def test_wishlist_create_db_exception(self):
+        """It should raise DataValidationError if db.session.add or commit fails during create"""
+        wishlist = WishlistFactory()
+        wishlist.id = None
+        # Patch db.session.add to raise Exception
+        original_add = db.session.add
+        def raise_exc(obj): raise Exception("DB error")
+        db.session.add = raise_exc
+        try:
+            with self.assertRaises(DataValidationError):
+                wishlist.create()
+        finally:
+            db.session.add = original_add
+
+    def test_wishlist_update_db_exception(self):
+        """It should raise DataValidationError if db.session.commit fails during update"""
+        wishlist = WishlistFactory()
+        wishlist.create()
+        original_commit = db.session.commit
+        def raise_exc(): raise Exception("DB error")
+        db.session.commit = raise_exc
+        try:
+            with self.assertRaises(DataValidationError):
+                wishlist.update()
+        finally:
+            db.session.commit = original_commit
+
+    def test_wishlist_delete_db_exception(self):
+        """It should raise DataValidationError if db.session.delete or commit fails during delete"""
+        wishlist = WishlistFactory()
+        wishlist.create()
+        original_delete = db.session.delete
+        def raise_exc(obj): raise Exception("DB error")
+        db.session.delete = raise_exc
+        try:
+            with self.assertRaises(DataValidationError):
+                wishlist.delete()
+        finally:
+            db.session.delete = original_delete

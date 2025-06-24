@@ -266,20 +266,40 @@ class WishlistItem(db.Model):
             "updated_at": (self.updated_at.isoformat() if self.updated_at else None),
         }
 
-    def deserialize(self, data: dict) -> None:
-        """Convert a dictionary into an object"""
-        self.id = data.get("id", None)
-        self.wishlist_id = data.get("wishlist_id", None)
-        self.product_id = data.get("product_id", None)
-        self.quantity = data.get(
-            "quantity", 1
-        )  # Default to 1 if quantity is not provided
-        self.product_name = data.get("product_name", None)
-        self.product_description = data.get("product_description", None)
-        self.product_price = data.get("product_price", None)
-        self.created_at = data.get("created_at", None)
-        self.updated_at = data.get("updated_at", None)
-
+    def deserialize(self, data):
+        """
+        Populates a WishlistItem from a dictionary.
+        :param data: A dictionary containing WishlistItem data
+        :raises DataValidationError: if data is not valid
+        """
+        if not isinstance(data, dict):
+            raise DataValidationError("Invalid WishlistItem: not a dictionary")
+        try:
+            self.id = data.get("id", None)
+            self.wishlist_id = data["wishlist_id"]
+            self.product_id = data["product_id"]
+            self.product_name = data["product_name"]
+            self.product_description = data["product_description"]
+            self.quantity = data.get("quantity", 1)
+            self.product_price = float(data["product_price"])
+            self.created_at = data.get("created_at", None)
+            self.updated_at = data.get("updated_at", None)
+            if self.product_name is None or not isinstance(self.product_name, str):
+                raise DataValidationError("Invalid WishlistItem: product_name must be a string")
+            if self.product_description is None or not isinstance(self.product_description, str):
+                raise DataValidationError("Invalid WishlistItem: product_description must be a string")
+            if not isinstance(self.quantity, int):
+                raise DataValidationError("Invalid WishlistItem: quantity must be an integer")
+        except KeyError as error:
+            raise DataValidationError(
+                "Invalid WishlistItem: missing " + error.args[0]
+            ) from error
+        except (ValueError, TypeError) as error:
+            raise DataValidationError(
+                "Invalid WishlistItem: bad or no data - " + str(error)
+            ) from error
+        return self
+    
     def create(self) -> None:
         """
         Creates a Account to the database

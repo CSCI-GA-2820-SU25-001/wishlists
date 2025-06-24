@@ -319,3 +319,45 @@ class TestSadPaths(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     # Todo: Add your test cases here...
+
+    def test_update_item_not_found(self):
+        """It should return 404 if the item does not exist"""
+        wishlist = WishlistFactory()
+        wishlist.create()
+        resp = self.client.put(
+            f"/wishlists/{wishlist.id}/items/99999",
+            json={"product_name": "test"},
+            content_type="application/json",
+        )
+        self.assertEqual(resp.status_code, 404)
+        self.assertIn(b"could not be found", resp.data)
+
+    def test_update_item_wrong_wishlist(self):
+        """It should return 404 if the item does not belong to the wishlist"""
+        wishlist1 = WishlistFactory()
+        wishlist1.create()
+        wishlist2 = WishlistFactory()
+        wishlist2.create()
+        item = WishlistItemFactory(wishlist=wishlist1)
+        item.create()
+        resp = self.client.put(
+            f"/wishlists/{wishlist2.id}/items/{item.id}",
+            json=item.serialize(),
+            content_type="application/json",
+        )
+        self.assertEqual(resp.status_code, 404)
+        self.assertIn(b"could not be found in Wishlist", resp.data)
+
+    def test_update_item_content_type(self):
+        """It should return 415 if Content-Type is not application/json"""
+        wishlist = WishlistFactory()
+        wishlist.create()
+        item = WishlistItemFactory(wishlist=wishlist)
+        item.create()
+        resp = self.client.put(
+            f"/wishlists/{wishlist.id}/items/{item.id}",
+            data="not json",
+            content_type="text/plain",
+        )
+        self.assertEqual(resp.status_code, 415)
+        self.assertIn(b"Content-Type must be application/json", resp.data)
