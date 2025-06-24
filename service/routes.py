@@ -116,6 +116,37 @@ def delete_wishlist(wishlist_id):
     wishlist.delete()
     return "", 204
 
+
+# ---------------------------------------------------------------------
+#                I T E M   M E T H O D S
+# ---------------------------------------------------------------------
+
+######################################################################
+# LIST ALL ITEMS IN WISHLIST
+######################################################################
+@app.route("/wishlists/<int:wishlist_id>/wishlist_items", methods=["GET"])
+def list_wishlist_items(wishlist_id):
+    """
+    List all items in a wishlist
+    This endpoint will return a list of all items in a wishlist based on the wishlist ID.
+    """
+    app.logger.info("Request to list all items in wishlist with id: %s", wishlist_id)
+
+    # See if the wishlist exists and abort if it doesn't
+    wishlist = Wishlist.find(wishlist_id)
+    if not wishlist:
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"Wishlist with id '{wishlist_id}' could not be found.",
+        )
+        
+    # Get the wishlist items for the wishlist
+    results = [wishlist_item.serialize() for wishlist_item in wishlist.wishlist_items]
+
+    # Return the list of items in the wishlist
+    return jsonify(results), status.HTTP_200_OK
+
+
 ######################################################################
 # ADD AN ITEM TO WISHLIST
 ######################################################################
