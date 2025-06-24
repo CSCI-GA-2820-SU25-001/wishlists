@@ -44,7 +44,6 @@ def index():
 ######################################################################
 # READ A WISHLIST
 ######################################################################
-# NOT FINISHED, JUST A SKELETON
 @app.route("/wishlists/<int:wishlist_id>", methods=["GET"])
 def get_wishlist(wishlist_id):
     """
@@ -99,6 +98,27 @@ def create_wishlist():
 ######################################################################
 # UPDATE AN EXISTING WISHLIST
 ######################################################################
+@app.route("/wishlists/<int:wishlist_id>", methods=["PUT"])
+def update_wishlist(wishlist_id):
+    """
+    Update a wishlist's name
+    """
+    app.logger.info("Request to update Wishlist with id: %s", wishlist_id)
+    wishlist = Wishlist.find(wishlist_id)
+    if not wishlist:
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"Wishlist with id '{wishlist_id}' could not be found.",
+        )
+
+    data = request.get_json()
+    if "name" not in data or not data["name"]:
+        abort(status.HTTP_400_BAD_REQUEST, "Wishlist name is required.")
+
+    wishlist.name = data["name"]
+    wishlist.update()
+
+    return jsonify(wishlist.serialize()), status.HTTP_200_OK
 
 
 ######################################################################
@@ -121,6 +141,7 @@ def delete_wishlist(wishlist_id):
 #                I T E M   M E T H O D S
 # ---------------------------------------------------------------------
 
+
 ######################################################################
 # LIST ALL ITEMS IN WISHLIST
 ######################################################################
@@ -139,7 +160,7 @@ def list_wishlist_items(wishlist_id):
             status.HTTP_404_NOT_FOUND,
             f"Wishlist with id '{wishlist_id}' could not be found.",
         )
-        
+
     # Get the wishlist items for the wishlist
     results = [wishlist_item.serialize() for wishlist_item in wishlist.wishlist_items]
 
@@ -183,10 +204,9 @@ def add_item_to_wishlist(wishlist_id):
         "get_wishlist_item",
         wishlist_id=wishlist.id,
         wishlist_item_id=wishlist_item.id,
-        _external=True
+        _external=True,
     )
     return jsonify(message), status.HTTP_201_CREATED, {"Location": location_url}
-
 
 
 ######################################################################
@@ -227,7 +247,6 @@ def update_wishlist_item(wishlist_id, item_id):
     return jsonify(item.serialize()), status.HTTP_200_OK
 
 
-
 ######################################################################
 # Remove AN ITEM FROM WISHLIST
 ######################################################################
@@ -250,13 +269,20 @@ def delete_wishlist_item(wishlist_id, item_id):
 ######################################################################
 # GET A WISHLIST ITEM
 ######################################################################
-@app.route("/wishlists/<int:wishlist_id>/wishlist_items/<int:wishlist_item_id>", methods=["GET"])
+@app.route(
+    "/wishlists/<int:wishlist_id>/wishlist_items/<int:wishlist_item_id>",
+    methods=["GET"],
+)
 def get_wishlist_item(wishlist_id, wishlist_item_id):
     """
     Get a single wishlist item from a wishlist
     """
-    app.logger.info("Request to get wishlist item %s from wishlist %s", wishlist_item_id, wishlist_id)
-    
+    app.logger.info(
+        "Request to get wishlist item %s from wishlist %s",
+        wishlist_item_id,
+        wishlist_id,
+    )
+
     # See if the wishlist item exists and abort if it doesn't
     wishlist_item = WishlistItem.find(wishlist_item_id)
     if not wishlist_item:
@@ -264,7 +290,7 @@ def get_wishlist_item(wishlist_id, wishlist_item_id):
             status.HTTP_404_NOT_FOUND,
             f"Wishlist item with id '{wishlist_item_id}' could not be found in wishlist '{wishlist_id}'.",
         )
-        
+
     return jsonify(wishlist_item.serialize()), status.HTTP_200_OK
 
 
