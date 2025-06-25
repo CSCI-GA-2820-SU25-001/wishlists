@@ -27,6 +27,8 @@ from click.testing import CliRunner
 # pylint: disable=unused-import
 from wsgi import app  # noqa: F401
 from service.common.cli_commands import db_create  # noqa: E402
+from service import create_app
+from service.common.log_handlers import init_logging
 
 
 class TestFlaskCLI(TestCase):
@@ -42,3 +44,17 @@ class TestFlaskCLI(TestCase):
         with patch.dict(os.environ, {"FLASK_APP": "wsgi:app"}, clear=True):
             result = self.runner.invoke(db_create)
             self.assertEqual(result.exit_code, 0)
+
+    def test_create_app_with_db_error(self):
+        """It should handle database creation error"""
+        with patch("service.wishlist.db.create_all") as mock_create:
+            mock_create.side_effect = Exception("Database error")
+            with self.assertRaises(SystemExit) as context:
+                create_app()
+            self.assertEqual(context.exception.code, 4)
+
+    def test_log_handlers_no_handlers(self):
+        """It should handle case when app has no handlers"""
+        test_app = app
+        test_app.logger.handlers = []
+        init_logging(test_app, "test.logger")
