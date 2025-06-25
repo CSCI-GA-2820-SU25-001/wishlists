@@ -1,3 +1,9 @@
+"""
+Wishlist and WishlistItem models
+
+This module contains methods for serialization, deserialization, and database operations.
+"""
+
 from datetime import datetime
 import logging
 from flask_sqlalchemy import SQLAlchemy
@@ -17,6 +23,7 @@ class DataValidationError(Exception):
 ######################################################################
 
 
+# pylint: disable=too-many-instance-attributes
 class Wishlist(db.Model):
     """
     Class that represents a wishlist
@@ -88,6 +95,11 @@ class Wishlist(db.Model):
         return wishlist
 
     def deserialize(self, data):
+        """
+        Populates a Wishlist from a dictionary.
+        param data: A dictionary has Wishlist data
+        raises DataValidationError: if data is not valid
+        """
         try:
             self.name = data["name"]
             self.customer_id = data["customer_id"]
