@@ -5,7 +5,6 @@ Test cases for Wishlist Model
 import os
 import logging
 from unittest import TestCase
-from unittest.mock import patch
 from wsgi import app
 from service.wishlist import Wishlist, WishlistItem, DataValidationError, db
 from tests.factories import WishlistFactory, WishlistItemFactory
@@ -87,6 +86,13 @@ class TestWishlist(TestCase):
         self.assertEqual(found_wishlist.created_at, wishlist.created_at)
         self.assertEqual(found_wishlist.updated_at, wishlist.updated_at)
         self.assertEqual(found_wishlist.wishlist_items, [])
+
+    def test_update_without_id_raises(self):
+        """It should raise DataValidationError if update called without id"""
+        wishlist = WishlistFactory()
+        wishlist.id = None
+        with self.assertRaises(DataValidationError):
+            wishlist.update()
 
 
 ######################################################################
@@ -202,8 +208,13 @@ class TestWishlistItem(TestCase):
         self.assertEqual(new_wishlist.wishlist_items[0].product_name, item.product_name)
         self.assertEqual(new_wishlist.wishlist_items[0].product_id, item.product_id)
         self.assertEqual(new_wishlist.wishlist_items[0].quantity, item.quantity)
-        self.assertEqual(new_wishlist.wishlist_items[0].product_description, item.product_description)
-        self.assertEqual(float(new_wishlist.wishlist_items[0].product_price), float(item.product_price))
+        self.assertEqual(
+            new_wishlist.wishlist_items[0].product_description, item.product_description
+        )
+        self.assertEqual(
+            float(new_wishlist.wishlist_items[0].product_price),
+            float(item.product_price),
+        )
 
     def test_delete_a_wishlist(self):
         """It should delete a wishlist from the database"""
@@ -244,11 +255,7 @@ class TestWishlistItem(TestCase):
     def test_deserialize_wishlist_items_type_error(self):
         """It should raise DataValidationError if wishlist_items is not a list"""
         wishlist = Wishlist()
-        data = {
-            "name": "Test",
-            "customer_id": "c1",
-            "wishlist_items": "notalist"
-        }
+        data = {"name": "Test", "customer_id": "c1", "wishlist_items": "notalist"}
         with self.assertRaises(DataValidationError):
             wishlist.deserialize(data)
 
@@ -258,7 +265,10 @@ class TestWishlistItem(TestCase):
         wishlist.id = None
         # Patch db.session.add to raise Exception
         original_add = db.session.add
-        def raise_exc(obj): raise Exception("DB error")
+
+        def raise_exc(obj):
+            raise Exception("DB error")
+
         db.session.add = raise_exc
         try:
             with self.assertRaises(DataValidationError):
@@ -271,7 +281,10 @@ class TestWishlistItem(TestCase):
         wishlist = WishlistFactory()
         wishlist.create()
         original_commit = db.session.commit
-        def raise_exc(): raise Exception("DB error")
+
+        def raise_exc():
+            raise Exception("DB error")
+
         db.session.commit = raise_exc
         try:
             with self.assertRaises(DataValidationError):
@@ -284,7 +297,10 @@ class TestWishlistItem(TestCase):
         wishlist = WishlistFactory()
         wishlist.create()
         original_delete = db.session.delete
-        def raise_exc(obj): raise Exception("DB error")
+
+        def raise_exc(obj):
+            raise Exception("DB error")
+
         db.session.delete = raise_exc
         try:
             with self.assertRaises(DataValidationError):

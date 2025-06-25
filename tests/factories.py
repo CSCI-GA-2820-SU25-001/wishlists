@@ -51,7 +51,8 @@ class WishlistItemFactory(factory.Factory):
     product_id = factory.Faker("random_int", min=1, max=9999)
     product_name = factory.Faker("word")
     product_description = factory.Faker("sentence")
-    quantity = FuzzyInteger(1, 10) # Added quantity with a random integer between 1 and 10
+    # Added quantity with a random integer between 1 and 10
+    quantity = FuzzyInteger(1, 10)
     product_price = factory.Faker(
         "pydecimal",
         left_digits=4,
