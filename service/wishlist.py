@@ -285,11 +285,19 @@ class WishlistItem(db.Model):
             self.created_at = data.get("created_at", None)
             self.updated_at = data.get("updated_at", None)
             if self.product_name is None or not isinstance(self.product_name, str):
-                raise DataValidationError("Invalid WishlistItem: product_name must be a string")
-            if self.product_description is None or not isinstance(self.product_description, str):
-                raise DataValidationError("Invalid WishlistItem: product_description must be a string")
+                raise DataValidationError(
+                    "Invalid WishlistItem: product_name must be a string"
+                )
+            if self.product_description is None or not isinstance(
+                self.product_description, str
+            ):
+                raise DataValidationError(
+                    "Invalid WishlistItem: product_description must be a string"
+                )
             if not isinstance(self.quantity, int):
-                raise DataValidationError("Invalid WishlistItem: quantity must be an integer")
+                raise DataValidationError(
+                    "Invalid WishlistItem: quantity must be an integer"
+                )
         except KeyError as error:
             raise DataValidationError(
                 "Invalid WishlistItem: missing " + error.args[0]
@@ -299,7 +307,7 @@ class WishlistItem(db.Model):
                 "Invalid WishlistItem: bad or no data - " + str(error)
             ) from error
         return self
-    
+
     def create(self) -> None:
         """
         Creates a Account to the database

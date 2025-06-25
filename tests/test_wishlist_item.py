@@ -86,8 +86,12 @@ class TestWishlistItem(TestCase):
         self.assertEqual(new_wishlist_item.wishlist_id, wishlist_item.wishlist_id)
         self.assertEqual(new_wishlist_item.product_id, wishlist_item.product_id)
         self.assertEqual(new_wishlist_item.product_name, wishlist_item.product_name)
-        self.assertEqual(new_wishlist_item.product_description, wishlist_item.product_description)
-        self.assertEqual(new_wishlist_item.product_price, float(wishlist_item.product_price))
+        self.assertEqual(
+            new_wishlist_item.product_description, wishlist_item.product_description
+        )
+        self.assertEqual(
+            new_wishlist_item.product_price, float(wishlist_item.product_price)
+        )
         self.assertEqual(new_wishlist_item.quantity, wishlist_item.quantity)
 
     def test_add_wishlist_item(self):
@@ -186,13 +190,13 @@ class TestWishlistItem(TestCase):
         """It should raise DataValidationError for missing required fields"""
         item = WishlistItem()
         with self.assertRaises(DataValidationError):
-            item.deserialize({}) 
+            item.deserialize({})
 
     def test_wishlist_item_deserialize_type_error(self):
         """It should raise DataValidationError for wrong type"""
         item = WishlistItem()
         with self.assertRaises(DataValidationError):
-            item.deserialize([])  
+            item.deserialize([])
 
     def test_wishlist_item_deserialize_value_error(self):
         """It should raise DataValidationError for value error"""
@@ -227,7 +231,10 @@ class TestWishlistItem(TestCase):
         item = WishlistItemFactory()
         item.create()
         original_delete = db.session.delete
-        def raise_exc(obj): raise Exception("DB error")
+
+        def raise_exc(obj):
+            raise Exception("DB error")
+
         db.session.delete = raise_exc
         try:
             with self.assertRaises(DataValidationError):
@@ -240,7 +247,10 @@ class TestWishlistItem(TestCase):
         item = WishlistItemFactory()
         item.create()
         original_commit = db.session.commit
-        def raise_exc(): raise Exception("DB error")
+
+        def raise_exc():
+            raise Exception("DB error")
+
         db.session.commit = raise_exc
         try:
             with self.assertRaises(DataValidationError):
@@ -330,18 +340,3 @@ class TestWishlistItem(TestCase):
         item = WishlistItem()
         with self.assertRaises(DataValidationError):
             item.deserialize(["not", "a", "dict"])
-
-    def test_wishlist_item_deserialize_value_error(self):
-        """It should raise DataValidationError if product_price cannot be converted to float"""
-        item = WishlistItem()
-        data = {
-            "wishlist_id": 1,
-            "product_id": 2,
-            "product_name": "Test",
-            "product_description": "desc",
-            "quantity": 1,
-            "product_price": "not-a-float",
-        }
-        with self.assertRaises(DataValidationError):
-            item.deserialize(data)
-
