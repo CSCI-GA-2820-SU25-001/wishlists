@@ -166,14 +166,12 @@ def update_wishlist(wishlist_id):
 ######################################################################
 @app.route("/wishlists/<int:wishlist_id>", methods=["DELETE"])
 def delete_wishlist(wishlist_id):
-    """Delete a wishlist by ID"""
     app.logger.info("Request to delete wishlist with id: %s", wishlist_id)
 
     wishlist = Wishlist.find(wishlist_id)
-    if not wishlist:
-        abort(404, f"Wishlist with id '{wishlist_id}' was not found.")
+    if wishlist:
+        wishlist.delete()
 
-    wishlist.delete()
     return "", 204
 
 
