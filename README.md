@@ -2,7 +2,8 @@
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python](https://img.shields.io/badge/Language-Python-blue.svg)](https://python.org/)
-
+[![Build Status](https://github.com/CSCI-GA-2820-FA24-003/wishlists/actions/workflows/ci.yml/badge.svg)](https://github.com/CSCI-GA-2820-FA24-003/wishlists/actions)
+[![codecov](https://codecov.io/gh/CSCI-GA-2820-FA24-003/wishlists/branch/master/graph/badge.svg)](https://codecov.io/gh/CSCI-GA-2820-FA24-003/wishlists)
 ## Overview
 
 A RESTful microservice for managing customer wishlists allows customers to create, manage, and organize their wishlists with items. This service provides a complete REST API for features such as creating wishlists, adding or removing items, and listing wishlist contents.
@@ -31,9 +32,12 @@ A RESTful microservice for managing customer wishlists allows customers to creat
 |--------|----------|-------------|
 | POST   | `/wishlists` | Create a new wishlist |
 | GET    | `/wishlists` | List all wishlists |
+| GET    | `/wishlists?customer_id={id}` | List wishlists by customer ID |
+| GET    | `/wishlists?name={name}` | List wishlists by name |
 | GET    | `/wishlists/{id}` | Get a specific wishlist |
 | PUT    | `/wishlists/{id}` | Update a wishlist |
 | DELETE | `/wishlists/{id}` | Delete a wishlist |
+| POST   | `/wishlists/{id}/clear` | Clear all items from a wishlist (Action) |
 
 ### Wishlist Items
 
@@ -41,6 +45,7 @@ A RESTful microservice for managing customer wishlists allows customers to creat
 |--------|----------|-------------|
 | POST   | `/wishlists/{id}/items` | Add an item |
 | GET    | `/wishlists/{id}/items` | List all items |
+| GET    | `/wishlists/{id}/items?product_name={name}` | List items by product name |
 | GET    | `/wishlists/{id}/items/{item_id}` | Get a specific item |
 | PUT    | `/wishlists/{id}/items/{item_id}` | Update an item |
 | DELETE | `/wishlists/{id}/items/{item_id}` | Remove an item |
@@ -75,6 +80,33 @@ tests/                     - test cases package
 ├── test_models.py         - test suite for business models
 └── test_routes.py         - test suite for service routes
 ```
+### Query Examples
+
+The API supports filtering wishlists and items using query parameters:
+
+1. **Filter Wishlists by Customer ID**
+   ```bash
+   GET /wishlists?customer_id=customer123
+   ```
+
+2. **Filter Wishlists by Name**
+   ```bash
+   GET /wishlists?name=Holiday%20Wishlist
+   ```
+
+3. **Filter Items by Product Name**
+   ```bash
+   GET /wishlists/{id}/items?product_name=iPhone
+   ```
+
+### Actions Section
+
+The API supports the following actions beyond standard CRUD operations:
+
+1. **Clear Wishlist**
+   ```bash
+   POST /wishlists/{id}/clear
+   ```
 
 ### How to run
 
