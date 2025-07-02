@@ -395,6 +395,103 @@ class TestWishlistService(TestCase):
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0]["name"], "Special Wishlist")
 
+    def test_clear_wishlist_with_items(self):
+        """It should clear all items from a wishlist with items"""
+        # Create a wishlist
+        wishlist = self._create_wishlists(1)[0]
+
+        # Add multiple items to the wishlist
+        item1 = WishlistItemFactory()
+        item2 = WishlistItemFactory()
+
+        resp1 = self.client.post(
+            f"{BASE_URL}/{wishlist.id}/items",
+            json=item1.serialize(),
+            content_type="application/json",
+        )
+        self.assertEqual(resp1.status_code, status.HTTP_201_CREATED)
+
+        resp2 = self.client.post(
+            f"{BASE_URL}/{wishlist.id}/items",
+            json=item2.serialize(),
+            content_type="application/json",
+        )
+        self.assertEqual(resp2.status_code, status.HTTP_201_CREATED)
+
+        # Verify items were added
+        resp = self.client.get(f"{BASE_URL}/{wishlist.id}/items")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(len(data), 2)
+
+        # Clear the wishlist
+        resp = self.client.post(f"{BASE_URL}/{wishlist.id}/clear")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        # Verify response content
+        data = resp.get_json()
+        self.assertEqual(data["wishlist_id"], wishlist.id)
+        self.assertEqual(data["items_remaining"], 0)
+        self.assertIn("cleared", data["message"])
+
+        # Verify all items are gone
+        resp = self.client.get(f"{BASE_URL}/{wishlist.id}/items")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(len(data), 0)
+
+        # Verify wishlist still exists
+        resp = self.client.get(f"{BASE_URL}/{wishlist.id}")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+    def test_clear_empty_wishlist(self):
+        """It should clear a wishlist that has no items"""
+        # Create a wishlist with no items
+        wishlist = self._create_wishlists(1)[0]
+
+        # Verify it has no items
+        resp = self.client.get(f"{BASE_URL}/{wishlist.id}/items")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(len(data), 0)
+
+        # Clear the empty wishlist
+        resp = self.client.post(f"{BASE_URL}/{wishlist.id}/clear")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        # Verify response
+        data = resp.get_json()
+        self.assertEqual(data["wishlist_id"], wishlist.id)
+        self.assertEqual(data["items_remaining"], 0)
+
+        # Verify wishlist still exists
+        resp = self.client.get(f"{BASE_URL}/{wishlist.id}")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+    def test_clear_nonexistent_wishlist(self):
+        """It should return 404 when trying to clear a non-existent wishlist"""
+        resp = self.client.post(f"{BASE_URL}/999/clear")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
+        data = resp.get_json()
+        self.assertIn("could not be found", data["message"])
+
+    def test_clear_wishlist_method_not_allowed(self):
+        """It should not allow other HTTP methods on clear endpoint"""
+        wishlist = self._create_wishlists(1)[0]
+
+        # Test GET method (should not be allowed)
+        resp = self.client.get(f"{BASE_URL}/{wishlist.id}/clear")
+        self.assertEqual(resp.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        # Test PUT method (should not be allowed)
+        resp = self.client.put(f"{BASE_URL}/{wishlist.id}/clear")
+        self.assertEqual(resp.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        # Test DELETE method (should not be allowed)
+        resp = self.client.delete(f"{BASE_URL}/{wishlist.id}/clear")
+        self.assertEqual(resp.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
 
 ######################################################################
 #  T E S T   S A D   P A T H S
