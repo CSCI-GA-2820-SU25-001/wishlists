@@ -394,6 +394,95 @@ class TestWishlistService(TestCase):
         data = resp.get_json()
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0]["name"], "Special Wishlist")
+        
+    def test_search_items_by_product_name(self):
+        """It should search for items by product name in a wishlist"""
+        # Create a wishlist
+        wishlist = self._create_wishlists(1)[0]
+        
+        # Create items with different names
+        item1 = WishlistItemFactory(product_name="iPhone 15")
+        item2 = WishlistItemFactory(product_name="Samsung Galaxy")
+        item3 = WishlistItemFactory(product_name="iPhone 14")
+        
+        # Add all items to the wishlist
+        for item in [item1, item2, item3]:
+            resp = self.client.post(
+                f"{BASE_URL}/{wishlist.id}/items",
+                json=item.serialize(),
+                content_type="application/json",
+            )
+            self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+
+        # Search for items with "iPhone" in the name
+        resp = self.client.get(f"{BASE_URL}/{wishlist.id}/items?product_name=iPhone 15")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        
+        data = resp.get_json()
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["product_name"], "iPhone 15")
+
+    def test_search_items_by_product_name_multiple_results(self):
+        """It should return multiple items when multiple matches exist"""
+        # Create a wishlist
+        wishlist = self._create_wishlists(1)[0]
+        
+        # Create multiple items with the same name
+        item1 = WishlistItemFactory(product_name="iPhone")
+        item2 = WishlistItemFactory(product_name="iPhone")
+        
+        # Add items to the wishlist
+        for item in [item1, item2]:
+            resp = self.client.post(
+                f"{BASE_URL}/{wishlist.id}/items",
+                json=item.serialize(),
+                content_type="application/json",
+            )
+            self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+
+        # Search for items
+        resp = self.client.get(f"{BASE_URL}/{wishlist.id}/items?product_name=iPhone")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        
+        data = resp.get_json()
+        self.assertEqual(len(data), 2)
+        for item in data:
+            self.assertEqual(item["product_name"], "iPhone")
+
+    def test_search_items_by_product_name_not_found(self):
+        """It should return 404 when no items match the search term"""
+        # Create a wishlist with some items
+        wishlist = self._create_wishlists(1)[0]
+        item = WishlistItemFactory(product_name="iPhone")
+        
+        resp = self.client.post(
+            f"{BASE_URL}/{wishlist.id}/items",
+            json=item.serialize(),
+            content_type="application/json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+
+        # Search for a product that doesn't exist
+        resp = self.client.get(f"{BASE_URL}/{wishlist.id}/items?product_name=NonExistentProduct")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+        
+        # Verify the error message
+        data = resp.get_json()
+        self.assertIn("NonExistentProduct", data["message"])
+
+    def test_search_items_in_nonexistent_wishlist(self):
+        """It should return 404 when searching in a non-existent wishlist"""
+        resp = self.client.get(f"{BASE_URL}/99999/items?product_name=iPhone")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_search_items_empty_wishlist(self):
+        """It should return 404 when searching in an empty wishlist"""
+        # Create an empty wishlist
+        wishlist = self._create_wishlists(1)[0]
+        
+        # Search for items in the empty wishlist
+        resp = self.client.get(f"{BASE_URL}/{wishlist.id}/items?product_name=iPhone")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
 
 ######################################################################
