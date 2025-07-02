@@ -186,8 +186,9 @@ def delete_wishlist(wishlist_id):
 @app.route("/wishlists/<int:wishlist_id>/items", methods=["GET"])
 def list_wishlist_items(wishlist_id):
     """
-    List all items in a wishlist
-    This endpoint will return a list of all items in a wishlist based on the wishlist ID.
+    List all items in a wishlist or search by product name
+    This endpoint will return a list of all items in a wishlist based on the wishlist ID.\
+    Optionally filter by product_name using query parameter: ?product_name=search_term
     """
     app.logger.info("Request to list all items in wishlist with id: %s", wishlist_id)
 
@@ -198,9 +199,23 @@ def list_wishlist_items(wishlist_id):
             status.HTTP_404_NOT_FOUND,
             f"Wishlist with id '{wishlist_id}' could not be found.",
         )
-
-    # Get the wishlist items for the wishlist
-    results = [wishlist_item.serialize() for wishlist_item in wishlist.wishlist_items]
+        
+    # Check if there is a product_name query parameter for searching
+    product_name = request.args.get("product_name")
+    
+    if product_name:
+        app.logger.info("Searching for items with product_name: %s in wishlist %s", product_name, wishlist_id)
+        items = WishlistItem.find_by_product_name(product_name, wishlist_id)
+        
+        if not items:
+            abort(
+                status.HTTP_404_NOT_FOUND,
+                f"No items found with product_name '{product_name}' in wishlist '{wishlist_id}'.",
+            )
+        results = [item.serialize() for item in items]
+    else:
+        # Get the wishlist items for the wishlist
+        results = [wishlist_item.serialize() for wishlist_item in wishlist.wishlist_items]
 
     # Return the list of items in the wishlist
     return jsonify(results), status.HTTP_200_OK
