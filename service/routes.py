@@ -333,6 +333,46 @@ def get_wishlist_item(wishlist_id, item_id):
 
 
 ######################################################################
+# CLEAR ALL ITEMS FROM A WISHLIST (ACTION)
+######################################################################
+@app.route("/wishlists/<int:wishlist_id>/clear", methods=["POST"])
+def clear_wishlist(wishlist_id):
+    """
+    Clear all items from a wishlist
+    This endpoint will remove all items from a wishlist but keep the wishlist itself.
+    This is an Action endpoint that performs a stateful operation beyond CRUD.
+    """
+    app.logger.info("Request to clear all items from wishlist with id: %s", wishlist_id)
+
+    # Check if the wishlist exists
+    wishlist = Wishlist.find(wishlist_id)
+    if not wishlist:
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"Wishlist with id '{wishlist_id}' could not be found.",
+        )
+
+    # Remove all items from the wishlist
+    for item in wishlist.wishlist_items[
+        :
+    ]:  # Use slice copy to avoid modifying list during iteration
+        item.delete()
+
+    app.logger.info("All items cleared from wishlist with id: %s", wishlist_id)
+
+    return (
+        jsonify(
+            {
+                "message": f"All items have been cleared from wishlist {wishlist_id}",
+                "wishlist_id": wishlist_id,
+                "items_remaining": 0,
+            }
+        ),
+        status.HTTP_200_OK,
+    )
+
+
+######################################################################
 #  U T I L I T Y   F U N C T I O N S
 ######################################################################
 
