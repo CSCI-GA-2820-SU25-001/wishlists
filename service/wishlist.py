@@ -7,6 +7,7 @@ This module contains methods for serialization, deserialization, and database op
 from datetime import datetime
 import logging
 from flask_sqlalchemy import SQLAlchemy
+from decimal import Decimal
 
 logger = logging.getLogger("flask.app")
 
@@ -230,6 +231,7 @@ class WishlistItem(db.Model):
     product_name = the name of the product
     product_description = the description of the product
     product_price = the price of the product
+    category = the category of the product
     created_at = timestamp field to store when wishlist item was created
     updated_at = timestamp field to store when wishlist item was last updated
     quantity = How many of this product are desired in the wishlist
@@ -244,6 +246,7 @@ class WishlistItem(db.Model):
     product_name = db.Column(db.String(255), nullable=False)
     product_description = db.Column(db.String(255), nullable=False)
     product_price = db.Column(db.Numeric(precision=10, scale=2), nullable=False)
+    category = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, default=db.func.now())
     # updated_at = db.Column(db.DateTime, default=db.func.now())
     updated_at = db.Column(
@@ -257,6 +260,7 @@ class WishlistItem(db.Model):
             f"id=[{self.id}] "
             f"product_description='{self.product_description}', "
             f"product_price={self.product_price}, "
+            f"category='{self.category}', "
             f"wishlist[{self.wishlist_id}] "
             f"product[{self.product_id}]>"
             f"quantity={self.quantity}, "
@@ -274,6 +278,7 @@ class WishlistItem(db.Model):
             "product_description": self.product_description,
             "quantity": self.quantity,
             "product_price": self.product_price,
+            "category": self.category,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": (self.updated_at.isoformat() if self.updated_at else None),
         }
@@ -294,6 +299,7 @@ class WishlistItem(db.Model):
             self.product_description = data["product_description"]
             self.quantity = data.get("quantity", 1)
             self.product_price = float(data["product_price"])
+            self.category = data.get("category", None)
             self.created_at = data.get("created_at", None)
             self.updated_at = data.get("updated_at", None)
             if self.product_name is None or not isinstance(self.product_name, str):
@@ -367,6 +373,52 @@ class WishlistItem(db.Model):
         return cls.query.filter(
             cls.wishlist_id == wishlist_id, cls.product_name == product_name
         ).all()
+        
+    @classmethod
+    def find_by_category(cls, category, wishlist_id):
+        """Return all items matching category in a specific wishlist"""
+        logger.info("Processing lookup for category %s in wishlist %s...", category, wishlist_id)
+        return cls.query.filter(
+            cls.wishlist_id == wishlist_id, 
+            cls.category == category
+        ).all()
+        
+    @classmethod
+    def find_by_price_range(cls, min_price, max_price, wishlist_id):
+        """Return all items within a price range in a specific wishlist"""
+        logger.info("Processing lookup for price range %s-%s in wishlist %s...", 
+                   min_price, max_price, wishlist_id)
+        query = cls.query.filter(cls.wishlist_id == wishlist_id)
+        
+        if min_price is not None:
+            min_price = Decimal(str(min_price))
+            query = query.filter(cls.product_price >= min_price)
+        if max_price is not None:
+            max_price = Decimal(str(max_price))
+            query = query.filter(cls.product_price <= max_price)
+        
+        return query.all()
+    
+    @classmethod
+    def find_with_filters(cls, wishlist_id, product_name=None, category=None, 
+                          min_price=None, max_price=None):
+        """
+        Find items with multiple filters applied
+        This is the most flexible method that combines all possible filters
+        """
+        logger.info("Processing lookup with filters in wishlist %s...", wishlist_id)
+        query = cls.query.filter(cls.wishlist_id == wishlist_id)
+        
+        if product_name:
+            query = query.filter(cls.product_name == product_name)
+        if category:
+            query = query.filter(cls.category == category)
+        if min_price is not None:
+            query = query.filter(cls.product_price >= min_price)
+        if max_price is not None:
+            query = query.filter(cls.product_price <= max_price)
+        
+        return query.all()
 
     @classmethod
     def all(cls):

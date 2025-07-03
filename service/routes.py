@@ -187,8 +187,18 @@ def delete_wishlist(wishlist_id):
 def list_wishlist_items(wishlist_id):
     """
     List all items in a wishlist or search by product name
-    This endpoint will return a list of all items in a wishlist based on the wishlist ID.\
-    Optionally filter by product_name using query parameter: ?product_name=search_term
+    This endpoint will return a list of all items in a wishlist based on the wishlist ID.
+    
+    Supported query parameters:
+    - product_name: Filter items by product name.
+    - category: Filter items by category.
+    - min_price: Filter items with a minimum price.
+    - max_price: Filter items with a maximum price.
+    
+    Examples:
+    - /wishlists/1/items?category=electronics
+    - /wishlists/1/items?min_price=100&max_price=500
+    - /wishlists/1/items?category=food&min_price=10
     """
     app.logger.info("Request to list all items in wishlist with id: %s", wishlist_id)
 
@@ -200,21 +210,64 @@ def list_wishlist_items(wishlist_id):
             f"Wishlist with id '{wishlist_id}' could not be found.",
         )
         
-    # Check if there is a product_name query parameter for searching
+    # Extract query parameters for filtering
     product_name = request.args.get("product_name")
+    category = request.args.get("category")
+    min_price_str = request.args.get("min_price")
+    max_price_str = request.args.get("max_price")
     
-    if product_name:
-        app.logger.info("Searching for items with product_name: %s in wishlist %s", product_name, wishlist_id)
-        items = WishlistItem.find_by_product_name(product_name, wishlist_id)
+    min_price = None
+    max_price = None
+    
+    try:
+        if min_price_str is not None:
+            min_price = float(min_price_str)
+        if max_price_str is not None:
+            max_price = float(max_price_str)
+    except ValueError:
+        abort(
+            status.HTTP_400_BAD_REQUEST,
+            "Invalid price parameters. min_price and max_price must be valid numbers."
+        )
+    
+    # Check if any filtering parameters are provided
+    has_filters = any([
+        product_name,
+        category,
+        min_price is not None,
+        max_price is not None
+    ])
+    
+    if has_filters:
+        app.logger.info("Filtering items in wishlist %s with: product_name: %s, category: %s, min_price: %s, max_price: %s",
+                        wishlist_id, product_name, category, min_price, max_price)
+        
+        items = WishlistItem.find_with_filters(
+            wishlist_id=wishlist_id,
+            product_name=product_name,
+            category=category,
+            min_price=min_price,
+            max_price=max_price
+        )
         
         if not items:
+            filter_desc = []
+            if product_name:
+                filter_desc.append(f"product_name '{product_name}'")
+            if category:
+                filter_desc.append(f"category '{category}'")
+            if min_price is not None:
+                filter_desc.append(f"min_price '{min_price}'")
+            if max_price is not None:
+                filter_desc.append(f"max_price '{max_price}'")
+            
             abort(
                 status.HTTP_404_NOT_FOUND,
-                f"No items found with product_name '{product_name}' in wishlist '{wishlist_id}'.",
+                f"No items found with filters: {', '.join(filter_desc)} in wishlist '{wishlist_id}'.",
             )
-        results = [item.serialize() for item in items]
+        
+        results = [items.serialize() for items in items]
     else:
-        # Get the wishlist items for the wishlist
         results = [wishlist_item.serialize() for wishlist_item in wishlist.wishlist_items]
 
     # Return the list of items in the wishlist

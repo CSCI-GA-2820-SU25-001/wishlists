@@ -61,6 +61,7 @@ class WishlistItemFactory(factory.Factory):
         min_value=Decimal("10.00"),
         max_value=Decimal("1000.00"),
     )
+    category = FuzzyChoice(choices=["electronics", "food", "clothing", "books", "toys", "home", None])
     created_at = FuzzyDateTime(datetime(2000, 1, 1, tzinfo=timezone.utc))
     updated_at = FuzzyDateTime(datetime(2000, 1, 1, tzinfo=timezone.utc))
     wishlist = factory.SubFactory(WishlistFactory)
