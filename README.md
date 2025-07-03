@@ -45,7 +45,7 @@ A RESTful microservice for managing customer wishlists allows customers to creat
 |--------|----------|-------------|
 | POST   | `/wishlists/{id}/items` | Add an item |
 | GET    | `/wishlists/{id}/items` | List all items |
-| GET    | `/wishlists/{id}/items?product_name={name}` | List items by product name |
+| GET    | `/wishlists/{id}/items?{filters}` | List items with filtering |
 | GET    | `/wishlists/{id}/items/{item_id}` | Get a specific item |
 | PUT    | `/wishlists/{id}/items/{item_id}` | Update an item |
 | DELETE | `/wishlists/{id}/items/{item_id}` | Remove an item |
@@ -83,7 +83,7 @@ tests/                     - test cases package
 ### Query Examples
 
 The API supports filtering wishlists and items using query parameters:
-
+#### Wishlist Filtering
 1. **Filter Wishlists by Customer ID**
    ```bash
    GET /wishlists?customer_id=customer123
@@ -94,9 +94,35 @@ The API supports filtering wishlists and items using query parameters:
    GET /wishlists?name=Holiday%20Wishlist
    ```
 
-3. **Filter Items by Product Name**
+#### Wishlist Item Filtering
+3. **Search Items by Product Name**
    ```bash
    GET /wishlists/{id}/items?product_name=iPhone
+   ```
+
+4. **Filter Items by Category**
+   ```bash
+   GET /wishlists/{id}/items?category=Electronics
+   ```
+
+5. **Filter Items by Price Range**
+   ```bash
+   GET /wishlists/{id}/items?min_price=100&max_price=500
+   ```
+
+6. **Combine Multiple Filters**
+   ```bash
+   # Electronics items between $100-$500
+   GET /wishlists/{id}/items?category=electronics&min_price=100&max_price=500
+
+   # Food items under $25
+   GET /wishlists/{id}/items?category=food&max_price=25
+
+   # Specific iPhone in electronics category
+   GET /wishlists/{id}/items?product_name=iPhone&category=electronics
+
+   # All filters combined
+   GET /wishlists/{id}/items?product_name=iPhone&category=electronics&min_price=100&max_price=1500
    ```
 
 ### Actions Section
