@@ -218,6 +218,24 @@ class Wishlist(db.Model):
         """Return all wishlists for a specific user"""
         logger.info("Processing lookup for user %s ...", customer_id)
         return cls.query.filter(cls.customer_id == customer_id).all()
+    
+    @classmethod
+    def find_by_visibility(cls, is_public):
+        """Return all wishlists based on visibility"""
+        logger.info("Processing lookup for visibility %s ...", is_public)
+        return cls.query.filter(cls.is_public == is_public).all()
+    
+    @classmethod
+    def find_public_wishlists(cls):
+        """Return all public wishlists"""
+        logger.info("Processing lookup for public wishlists ...")
+        return cls.query.filter(cls.is_public == True).all()
+    
+    @classmethod
+    def find_private_wishlists(cls):
+        """Return all private wishlists"""
+        logger.info("Processing lookup for private wishlists ...")
+        return cls.query.filter(cls.is_public == False).all()
 
 
 class WishlistItem(db.Model):
