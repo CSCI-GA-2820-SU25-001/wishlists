@@ -253,6 +253,7 @@ class WishlistItem(db.Model):
     created_at = timestamp field to store when wishlist item was created
     updated_at = timestamp field to store when wishlist item was last updated
     quantity = How many of this product are desired in the wishlist
+    like = boolean flag to indicate if the item is liked by the user
     """
 
     # Table Schema
@@ -271,6 +272,7 @@ class WishlistItem(db.Model):
         db.DateTime, default=db.func.now(), onupdate=db.func.now(), nullable=False
     )
     quantity = db.Column(db.Integer, nullable=False, default=1)
+    likes = db.Column(db.Integer, nullable=False, default=0)
 
     def __repr__(self):
         return (
