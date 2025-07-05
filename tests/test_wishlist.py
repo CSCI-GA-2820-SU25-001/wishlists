@@ -116,3 +116,83 @@ class TestWishlist(TestCase):
         }
         with self.assertRaises(DataValidationError):
             wishlist.deserialize(data)
+            
+    def test_find_by_visibility_public(self):
+        """It should find all public wishlists"""
+        # Create public and private wishlists
+        public_wishlist1 = WishlistFactory(is_public=True, name="Public List 1")
+        public_wishlist2 = WishlistFactory(is_public=True, name="Public List 2")
+        private_wishlist = WishlistFactory(is_public=False, name="Private List")
+        
+        # Create them in the database
+        for wishlist in [public_wishlist1, public_wishlist2, private_wishlist]:
+            wishlist.create()
+        
+        # Find public wishlists
+        public_wishlists = Wishlist.find_by_visibility(True)
+        
+        # Should find exactly 2 public wishlists
+        self.assertEqual(len(public_wishlists), 2)
+        for wishlist in public_wishlists:
+            self.assertTrue(wishlist.is_public)
+            self.assertIn(wishlist.name, ["Public List 1", "Public List 2"])
+
+    def test_find_by_visibility_private(self):
+        """It should find all private wishlists"""
+        # Create public and private wishlists
+        public_wishlist = WishlistFactory(is_public=True, name="Public List")
+        private_wishlist1 = WishlistFactory(is_public=False, name="Private List 1")
+        private_wishlist2 = WishlistFactory(is_public=False, name="Private List 2")
+        
+        # Create them in the database
+        for wishlist in [public_wishlist, private_wishlist1, private_wishlist2]:
+            wishlist.create()
+        
+        # Find private wishlists
+        private_wishlists = Wishlist.find_by_visibility(False)
+        
+        # Should find exactly 2 private wishlists
+        self.assertEqual(len(private_wishlists), 2)
+        for wishlist in private_wishlists:
+            self.assertFalse(wishlist.is_public)
+            self.assertIn(wishlist.name, ["Private List 1", "Private List 2"])
+
+    def test_find_by_visibility_no_results(self):
+        """It should return empty list when no wishlists match the visibility setting"""
+        # Create only private wishlists
+        private_wishlist = WishlistFactory(is_public=False)
+        private_wishlist.create()
+        
+        # Search for public wishlists (should find none)
+        public_wishlists = Wishlist.find_by_visibility(True)
+        self.assertEqual(public_wishlists, [])
+
+    def test_find_public_wishlists_convenience_method(self):
+        """It should find public wishlists using convenience method"""
+        # Create public and private wishlists
+        public_wishlist = WishlistFactory(is_public=True)
+        private_wishlist = WishlistFactory(is_public=False)
+        
+        for wishlist in [public_wishlist, private_wishlist]:
+            wishlist.create()
+        
+        # Use convenience method
+        public_wishlists = Wishlist.find_public_wishlists()
+        
+        self.assertEqual(len(public_wishlists), 1)
+        self.assertTrue(public_wishlists[0].is_public)
+
+    def test_find_private_wishlists_convenience_method(self):
+        """It should find private wishlists using convenience method"""
+        # Create public and private wishlists
+        public_wishlist = WishlistFactory(is_public=True)
+        private_wishlist = WishlistFactory(is_public=False)
+        
+        for wishlist in [public_wishlist, private_wishlist]:
+            wishlist.create()
+        
+        # Use convenience method
+        private_wishlists = Wishlist.find_private_wishlists()
+        
+        self.assertEqual(len(private_wishlists), 1)
+        self.assertFalse(private_wishlists[0].is_public)
