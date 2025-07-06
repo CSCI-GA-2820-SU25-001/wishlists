@@ -395,17 +395,17 @@ class TestWishlistService(TestCase):
         data = resp.get_json()
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0]["name"], "Special Wishlist")
-        
+
     def test_search_items_by_product_name(self):
         """It should search for items by product name in a wishlist"""
         # Create a wishlist
         wishlist = self._create_wishlists(1)[0]
-        
+
         # Create items with different names
         item1 = WishlistItemFactory(product_name="iPhone 15")
         item2 = WishlistItemFactory(product_name="Samsung Galaxy")
         item3 = WishlistItemFactory(product_name="iPhone 14")
-        
+
         # Add all items to the wishlist
         for item in [item1, item2, item3]:
             resp = self.client.post(
@@ -418,7 +418,7 @@ class TestWishlistService(TestCase):
         # Search for items with "iPhone" in the name
         resp = self.client.get(f"{BASE_URL}/{wishlist.id}/items?product_name=iPhone 15")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        
+
         data = resp.get_json()
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0]["product_name"], "iPhone 15")
@@ -427,11 +427,11 @@ class TestWishlistService(TestCase):
         """It should return multiple items when multiple matches exist"""
         # Create a wishlist
         wishlist = self._create_wishlists(1)[0]
-        
+
         # Create multiple items with the same name
         item1 = WishlistItemFactory(product_name="iPhone")
         item2 = WishlistItemFactory(product_name="iPhone")
-        
+
         # Add items to the wishlist
         for item in [item1, item2]:
             resp = self.client.post(
@@ -444,7 +444,7 @@ class TestWishlistService(TestCase):
         # Search for items
         resp = self.client.get(f"{BASE_URL}/{wishlist.id}/items?product_name=iPhone")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        
+
         data = resp.get_json()
         self.assertEqual(len(data), 2)
         for item in data:
@@ -455,7 +455,7 @@ class TestWishlistService(TestCase):
         # Create a wishlist with some items
         wishlist = self._create_wishlists(1)[0]
         item = WishlistItemFactory(product_name="iPhone")
-        
+
         resp = self.client.post(
             f"{BASE_URL}/{wishlist.id}/items",
             json=item.serialize(),
@@ -464,9 +464,11 @@ class TestWishlistService(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
 
         # Search for a product that doesn't exist
-        resp = self.client.get(f"{BASE_URL}/{wishlist.id}/items?product_name=NonExistentProduct")
+        resp = self.client.get(
+            f"{BASE_URL}/{wishlist.id}/items?product_name=NonExistentProduct"
+        )
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
-        
+
         # Verify the error message
         data = resp.get_json()
         self.assertIn("NonExistentProduct", data["message"])
@@ -480,7 +482,7 @@ class TestWishlistService(TestCase):
         """It should return 404 when searching in an empty wishlist"""
         # Create an empty wishlist
         wishlist = self._create_wishlists(1)[0]
-        
+
         # Search for items in the empty wishlist
         resp = self.client.get(f"{BASE_URL}/{wishlist.id}/items?product_name=iPhone")
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
@@ -581,17 +583,19 @@ class TestWishlistService(TestCase):
         # Test DELETE method (should not be allowed)
         resp = self.client.delete(f"{BASE_URL}/{wishlist.id}/clear")
         self.assertEqual(resp.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
-        
+
     def test_filter_items_by_category(self):
         """It should filter items by category"""
         # Create a wishlist
         wishlist = self._create_wishlists(1)[0]
-        
+
         # Create items with different categories
-        electronics_item = WishlistItemFactory(category="electronics", product_name="iPhone")
+        electronics_item = WishlistItemFactory(
+            category="electronics", product_name="iPhone"
+        )
         food_item = WishlistItemFactory(category="food", product_name="Pizza")
         clothing_item = WishlistItemFactory(category="clothing", product_name="T-shirt")
-        
+
         # Add all items to the wishlist
         for item in [electronics_item, food_item, clothing_item]:
             resp = self.client.post(
@@ -604,7 +608,7 @@ class TestWishlistService(TestCase):
         # Filter by electronics category
         resp = self.client.get(f"{BASE_URL}/{wishlist.id}/items?category=electronics")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        
+
         data = resp.get_json()
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0]["category"], "electronics")
@@ -614,12 +618,18 @@ class TestWishlistService(TestCase):
         """It should filter items by price range"""
         # Create a wishlist
         wishlist = self._create_wishlists(1)[0]
-        
+
         # Create items with different prices
-        cheap_item = WishlistItemFactory(product_price=Decimal("50.00"), product_name="Cheap Item")
-        medium_item = WishlistItemFactory(product_price=Decimal("150.00"), product_name="Medium Item")
-        expensive_item = WishlistItemFactory(product_price=Decimal("500.00"), product_name="Expensive Item")
-        
+        cheap_item = WishlistItemFactory(
+            product_price=Decimal("50.00"), product_name="Cheap Item"
+        )
+        medium_item = WishlistItemFactory(
+            product_price=Decimal("150.00"), product_name="Medium Item"
+        )
+        expensive_item = WishlistItemFactory(
+            product_price=Decimal("500.00"), product_name="Expensive Item"
+        )
+
         # Add all items to the wishlist
         for item in [cheap_item, medium_item, expensive_item]:
             resp = self.client.post(
@@ -630,9 +640,11 @@ class TestWishlistService(TestCase):
             self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
 
         # Filter by price range 100-200
-        resp = self.client.get(f"{BASE_URL}/{wishlist.id}/items?min_price=100&max_price=200")
+        resp = self.client.get(
+            f"{BASE_URL}/{wishlist.id}/items?min_price=100&max_price=200"
+        )
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        
+
         data = resp.get_json()
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0]["product_name"], "Medium Item")
@@ -642,11 +654,11 @@ class TestWishlistService(TestCase):
         """It should filter items by minimum price only"""
         # Create a wishlist
         wishlist = self._create_wishlists(1)[0]
-        
+
         # Create items with different prices
         cheap_item = WishlistItemFactory(product_price=Decimal("50.00"))
         expensive_item = WishlistItemFactory(product_price=Decimal("500.00"))
-        
+
         # Add items to the wishlist
         for item in [cheap_item, expensive_item]:
             resp = self.client.post(
@@ -659,7 +671,7 @@ class TestWishlistService(TestCase):
         # Filter by minimum price 100
         resp = self.client.get(f"{BASE_URL}/{wishlist.id}/items?min_price=100")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        
+
         data = resp.get_json()
         self.assertEqual(len(data), 1)
         self.assertEqual(float(data[0]["product_price"]), 500.00)
@@ -668,11 +680,11 @@ class TestWishlistService(TestCase):
         """It should filter items by maximum price only"""
         # Create a wishlist
         wishlist = self._create_wishlists(1)[0]
-        
+
         # Create items with different prices
         cheap_item = WishlistItemFactory(product_price=Decimal("50.00"))
         expensive_item = WishlistItemFactory(product_price=Decimal("500.00"))
-        
+
         # Add items to the wishlist
         for item in [cheap_item, expensive_item]:
             resp = self.client.post(
@@ -685,7 +697,7 @@ class TestWishlistService(TestCase):
         # Filter by maximum price 100
         resp = self.client.get(f"{BASE_URL}/{wishlist.id}/items?max_price=100")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        
+
         data = resp.get_json()
         self.assertEqual(len(data), 1)
         self.assertEqual(float(data[0]["product_price"]), 50.00)
@@ -694,24 +706,24 @@ class TestWishlistService(TestCase):
         """It should filter items using multiple filters combined"""
         # Create a wishlist
         wishlist = self._create_wishlists(1)[0]
-        
+
         # Create items with different attributes
         target_item = WishlistItemFactory(
-            category="electronics", 
+            category="electronics",
             product_price=Decimal("150.00"),
-            product_name="Target Item"
+            product_name="Target Item",
         )
         wrong_category = WishlistItemFactory(
-            category="food", 
+            category="food",
             product_price=Decimal("150.00"),
-            product_name="Wrong Category"
+            product_name="Wrong Category",
         )
         wrong_price = WishlistItemFactory(
-            category="electronics", 
+            category="electronics",
             product_price=Decimal("50.00"),
-            product_name="Wrong Price"
+            product_name="Wrong Price",
         )
-        
+
         # Add all items to the wishlist
         for item in [target_item, wrong_category, wrong_price]:
             resp = self.client.post(
@@ -722,9 +734,11 @@ class TestWishlistService(TestCase):
             self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
 
         # Filter by both category and price range
-        resp = self.client.get(f"{BASE_URL}/{wishlist.id}/items?category=electronics&min_price=100&max_price=200")
+        resp = self.client.get(
+            f"{BASE_URL}/{wishlist.id}/items?category=electronics&min_price=100&max_price=200"
+        )
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        
+
         data = resp.get_json()
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0]["product_name"], "Target Item")
@@ -735,8 +749,10 @@ class TestWishlistService(TestCase):
         """It should return 404 when no items match the filters"""
         # Create a wishlist with some items
         wishlist = self._create_wishlists(1)[0]
-        item = WishlistItemFactory(category="electronics", product_price=Decimal("100.00"))
-        
+        item = WishlistItemFactory(
+            category="electronics", product_price=Decimal("100.00")
+        )
+
         resp = self.client.post(
             f"{BASE_URL}/{wishlist.id}/items",
             json=item.serialize(),
@@ -751,21 +767,21 @@ class TestWishlistService(TestCase):
     def test_filter_items_invalid_price(self):
         """It should return 400 for invalid price parameters"""
         wishlist = self._create_wishlists(1)[0]
-        
+
         # Test invalid min_price
         resp = self.client.get(f"{BASE_URL}/{wishlist.id}/items?min_price=invalid")
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
-        
+
         # Test invalid max_price
         resp = self.client.get(f"{BASE_URL}/{wishlist.id}/items?max_price=not_a_number")
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
-        
+
     def test_filter_items_min_price_no_results(self):
         """It should return 404 with min_price in error message when no items match min_price filter"""
         # Create a wishlist with low-priced items
         wishlist = self._create_wishlists(1)[0]
         cheap_item = WishlistItemFactory(product_price=Decimal("25.00"))
-        
+
         resp = self.client.post(
             f"{BASE_URL}/{wishlist.id}/items",
             json=cheap_item.serialize(),
@@ -776,7 +792,7 @@ class TestWishlistService(TestCase):
         # Search for items with min_price that won't match
         resp = self.client.get(f"{BASE_URL}/{wishlist.id}/items?min_price=100")
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
-        
+
         # Check that error message includes min_price information (correct format)
         data = resp.get_json()
         self.assertIn("min_price '100.0'", data["message"])
@@ -786,7 +802,7 @@ class TestWishlistService(TestCase):
         # Create a wishlist with expensive items
         wishlist = self._create_wishlists(1)[0]
         expensive_item = WishlistItemFactory(product_price=Decimal("500.00"))
-        
+
         resp = self.client.post(
             f"{BASE_URL}/{wishlist.id}/items",
             json=expensive_item.serialize(),
@@ -797,7 +813,7 @@ class TestWishlistService(TestCase):
         # Search for items with max_price that won't match
         resp = self.client.get(f"{BASE_URL}/{wishlist.id}/items?max_price=100")
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
-        
+
         # Check that error message includes max_price information (correct format)
         data = resp.get_json()
         self.assertIn("max_price '100.0'", data["message"])
@@ -807,7 +823,7 @@ class TestWishlistService(TestCase):
         # Create a wishlist with items outside the search range
         wishlist = self._create_wishlists(1)[0]
         item = WishlistItemFactory(product_price=Decimal("500.00"))
-        
+
         resp = self.client.post(
             f"{BASE_URL}/{wishlist.id}/items",
             json=item.serialize(),
@@ -816,9 +832,11 @@ class TestWishlistService(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
 
         # Search for items in a price range that won't match
-        resp = self.client.get(f"{BASE_URL}/{wishlist.id}/items?min_price=50&max_price=100")
+        resp = self.client.get(
+            f"{BASE_URL}/{wishlist.id}/items?min_price=50&max_price=100"
+        )
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
-        
+
         # Check that error message includes both price filters (correct format)
         data = resp.get_json()
         self.assertIn("min_price '50.0'", data["message"])
@@ -829,11 +847,11 @@ class TestWishlistService(TestCase):
         # Create a wishlist with items that won't match the combined filters
         wishlist = self._create_wishlists(1)[0]
         item = WishlistItemFactory(
-            category="electronics", 
+            category="electronics",
             product_price=Decimal("500.00"),
-            product_name="iPhone"
+            product_name="iPhone",
         )
-        
+
         resp = self.client.post(
             f"{BASE_URL}/{wishlist.id}/items",
             json=item.serialize(),
@@ -846,13 +864,19 @@ class TestWishlistService(TestCase):
             f"{BASE_URL}/{wishlist.id}/items?category=food&product_name=Pizza&min_price=10&max_price=50"
         )
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
-        
+
         # Check that error message includes all filters (correct format)
         data = resp.get_json()
-        self.assertIn("category 'food'", data["message"])        # Note: space, not =
-        self.assertIn("product_name 'Pizza'", data["message"])   # Note: space, not =
-        self.assertIn("min_price '10.0'", data["message"])       # Note: .0 decimal
-        self.assertIn("max_price '50.0'", data["message"])       # Note: .0 decimal
+        self.assertIn("category 'food'", data["message"])  # Note: space, not =
+        self.assertIn("product_name 'Pizza'", data["message"])  # Note: space, not =
+        self.assertIn("min_price '10.0'", data["message"])  # Note: .0 decimal
+        self.assertIn("max_price '50.0'", data["message"])  # Note: .0 decimal
+
+    def test_health_check(self):
+        """It should return health status"""
+        resp = self.client.get("/health")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.get_json(), {"status": "OK"})
 
 
 ######################################################################
@@ -970,7 +994,6 @@ class TestSadPaths(TestCase):
         # check wishlist_id match
         response = self.client.get(f"{BASE_URL}/99999/items/99999")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-
 
     def test_publish_wishlist(self):
         """It should publish a wishlist (set is_public to True)"""
