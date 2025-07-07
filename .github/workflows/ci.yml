@@ -1,61 +1,61 @@
-name: Wishlist CI
-
+name: Wishlist CI Build
 on:
   push:
-    branches: [ main, master ]
+    branches:
+      - master
   pull_request:
-    branches: [ main, master ]
+    branches:
+      - master
 
 jobs:
-  build-and-test:
+  build:
     runs-on: ubuntu-latest
+    container: python:3.11-slim
 
+    # Required services    
     services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: testdb
-        ports:
-          - 5432:5432
+      # Label used to access the service container
+      redis:
+        # Docker Hub image
+        image: redis:6-alpine
+        # Set health checks to wait until redis has started
         options: >-
-          --health-cmd="pg_isready -U postgres"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
-    env:
-      DATABASE_URI: postgresql+psycopg://postgres:postgres@localhost:5432/testdb
-
+    # Steps for the build
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install pipenv
-        run: pip install pipenv
-
-      - name: Install dependencies
-        run: pipenv install --dev --system
-
-      - name: Wait for Postgres
+      - name: Checkout
+        uses: actions/checkout@v3
+            
+      - name: Install Python package dependencies
         run: |
-          for i in {1..10}; do
-            if pg_isready -h localhost -U postgres; then
-              break
-            fi
-            sleep 2
-          done
+          python -m pip install -U pip pipenv
+          pipenv install --system --dev
 
-      - name: Run tests
-        run: pytest --maxfail=1 --disable-warnings --cov=service
+      - name: Linting
+        run: |
+          # stop the build if there are Python syntax errors or undefined names
+          flake8 service tests --count --select=E9,F63,F7,F82 --show-source --statistics
+          # test for complexity. The GitHub editor is 127 chars wide
+          flake8 service tests --count --max-complexity=10 --max-line-length=127 --statistics
+          # Run pylint to catch other PEP8 errors
+          pylint service tests --max-line-length=127
 
-    - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          slug: CSCI-GA-2820-SU25-001/wishlists
+      - name: Run unit tests with PyTest
+        run: pytest --pspec --cov=service --cov-fail-under=95 --cov-report=xml
+        env:
+          DATABASE_URI: "redis://redis:6379"
+
+      ######################################################################
+      # Create a CODECOV_TOKEN in Settings->Secrets and variables->Actions
+      # and then uncomment the CodeCov action during hands-on lab
+      ######################################################################
+
+      - name: Upload coverage reports to Codecov
+          uses: codecov/codecov-action@v5
+          with:
+            token: ${{ secrets.CODECOV_TOKEN }}
+            slug: CSCI-GA-2820-SU25-001/wishlists
