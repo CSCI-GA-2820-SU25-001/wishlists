@@ -878,6 +878,31 @@ class TestWishlistService(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.get_json(), {"status": "OK"})
 
+    def test_filter_wishlists_by_is_public(self):
+        """It should return Wishlists filtered by is_public value"""
+        # Create one public and one private wishlist
+        public_wishlist = WishlistFactory(is_public=True)
+        private_wishlist = WishlistFactory(is_public=False)
+
+        self.client.post(BASE_URL, json=public_wishlist.serialize())
+        self.client.post(BASE_URL, json=private_wishlist.serialize())
+
+        # Test filtering for public wishlists
+        resp = self.client.get(f"{BASE_URL}?is_public=true")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertGreaterEqual(len(data), 1)
+        for item in data:
+            self.assertTrue(item["is_public"])
+
+        # Test filtering for private wishlists
+        resp = self.client.get(f"{BASE_URL}?is_public=false")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertGreaterEqual(len(data), 1)
+        for item in data:
+            self.assertFalse(item["is_public"])
+
 
 ######################################################################
 #  T E S T   S A D   P A T H S
