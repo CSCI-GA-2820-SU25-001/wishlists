@@ -175,6 +175,15 @@ def delete_wishlist(wishlist_id):
     return "", 204
 
 
+######################################################################
+# HEALTH CHECK
+######################################################################
+@app.route("/health")
+def healthcheck():
+    """Returns service health status"""
+    return jsonify({"status": "OK"}), 200
+
+
 # ---------------------------------------------------------------------
 #                I T E M   M E T H O D S
 # ---------------------------------------------------------------------
@@ -188,13 +197,13 @@ def list_wishlist_items(wishlist_id):
     """
     List all items in a wishlist or search by product name
     This endpoint will return a list of all items in a wishlist based on the wishlist ID.
-    
+
     Supported query parameters:
     - product_name: Filter items by product name.
     - category: Filter items by category.
     - min_price: Filter items with a minimum price.
     - max_price: Filter items with a maximum price.
-    
+
     Examples:
     - /wishlists/1/items?category=electronics
     - /wishlists/1/items?min_price=100&max_price=500
@@ -209,16 +218,16 @@ def list_wishlist_items(wishlist_id):
             status.HTTP_404_NOT_FOUND,
             f"Wishlist with id '{wishlist_id}' could not be found.",
         )
-        
+
     # Extract query parameters for filtering
     product_name = request.args.get("product_name")
     category = request.args.get("category")
     min_price_str = request.args.get("min_price")
     max_price_str = request.args.get("max_price")
-    
+
     min_price = None
     max_price = None
-    
+
     try:
         if min_price_str is not None:
             min_price = float(min_price_str)
@@ -227,29 +236,32 @@ def list_wishlist_items(wishlist_id):
     except ValueError:
         abort(
             status.HTTP_400_BAD_REQUEST,
-            "Invalid price parameters. min_price and max_price must be valid numbers."
+            "Invalid price parameters. min_price and max_price must be valid numbers.",
         )
-    
+
     # Check if any filtering parameters are provided
-    has_filters = any([
-        product_name,
-        category,
-        min_price is not None,
-        max_price is not None
-    ])
-    
+    has_filters = any(
+        [product_name, category, min_price is not None, max_price is not None]
+    )
+
     if has_filters:
-        app.logger.info("Filtering items in wishlist %s with: product_name: %s, category: %s, min_price: %s, max_price: %s",
-                        wishlist_id, product_name, category, min_price, max_price)
-        
+        app.logger.info(
+            "Filtering items in wishlist %s with: product_name: %s, category: %s, min_price: %s, max_price: %s",
+            wishlist_id,
+            product_name,
+            category,
+            min_price,
+            max_price,
+        )
+
         items = WishlistItem.find_with_filters(
             wishlist_id=wishlist_id,
             product_name=product_name,
             category=category,
             min_price=min_price,
-            max_price=max_price
+            max_price=max_price,
         )
-        
+
         if not items:
             filter_desc = []
             if product_name:
@@ -260,15 +272,17 @@ def list_wishlist_items(wishlist_id):
                 filter_desc.append(f"min_price '{min_price}'")
             if max_price is not None:
                 filter_desc.append(f"max_price '{max_price}'")
-            
+
             abort(
                 status.HTTP_404_NOT_FOUND,
                 f"No items found with filters: {', '.join(filter_desc)} in wishlist '{wishlist_id}'.",
             )
-        
+
         results = [items.serialize() for items in items]
     else:
-        results = [wishlist_item.serialize() for wishlist_item in wishlist.wishlist_items]
+        results = [
+            wishlist_item.serialize() for wishlist_item in wishlist.wishlist_items
+        ]
 
     # Return the list of items in the wishlist
     return jsonify(results), status.HTTP_200_OK
