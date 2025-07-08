@@ -61,13 +61,13 @@ def index():
 @app.route("/wishlists", methods=["GET"])
 def list_wishlists():
     """
-    List all Wishlists
-    This endpoint will return all wishlists
+    List all Wishlists with optional filters
     """
     app.logger.info("List all wishlists")
 
     customer_id = request.args.get("customer_id")
     name = request.args.get("name")
+    is_public = request.args.get("is_public")
 
     if customer_id:
         app.logger.info("Find by customer_id: %s", customer_id)
@@ -75,12 +75,22 @@ def list_wishlists():
     elif name:
         app.logger.info("Find by name: %s", name)
         wishlists = Wishlist.find_by_name(name)
+    elif is_public is not None:
+        if is_public.lower() == "true":
+            wishlists = Wishlist.find_by_visibility(True)
+        elif is_public.lower() == "false":
+            wishlists = Wishlist.find_by_visibility(False)
+        else:
+            abort(status.HTTP_400_BAD_REQUEST, "is_public must be 'true' or 'false'")
     else:
-        app.logger.info("Find all wishlists")
         wishlists = Wishlist.all()
 
-    results = [wishlist.serialize() for wishlist in wishlists]
-    app.logger.info("Returning %d wishlists", len(results))
+    results = []
+
+    for wishlist in wishlists:
+        data = wishlist.serialize()
+        results.append(data)
+
     return jsonify(results), status.HTTP_200_OK
 
 
