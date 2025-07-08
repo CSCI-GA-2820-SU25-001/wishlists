@@ -209,28 +209,30 @@ class Wishlist(db.Model):
 
     @classmethod
     def find_by_name(cls, name):
-        """Return all wishlists with the given name"""
-        logger.info("Processing name query for %s ...", name)
-        return cls.query.filter(cls.name == name).all()
+        """Return all wishlists whose names contain the given term (case-insensitive)"""
+        logger.info(
+            "Processing partial, case-insensitive name query for '%s' ...", name
+        )
+        return cls.query.filter(cls.name.ilike(f"%{name}%")).all()
 
     @classmethod
     def find_for_user(cls, customer_id):
         """Return all wishlists for a specific user"""
         logger.info("Processing lookup for user %s ...", customer_id)
         return cls.query.filter(cls.customer_id == customer_id).all()
-    
+
     @classmethod
     def find_by_visibility(cls, is_public):
         """Return all wishlists based on visibility"""
         logger.info("Processing lookup for visibility %s ...", is_public)
         return cls.query.filter(cls.is_public == is_public).all()
-    
+
     @classmethod
     def find_public_wishlists(cls):
         """Return all public wishlists"""
         logger.info("Processing lookup for public wishlists ...")
         return cls.query.filter(cls.is_public == True).all()
-    
+
     @classmethod
     def find_private_wishlists(cls):
         """Return all private wishlists"""
@@ -391,42 +393,53 @@ class WishlistItem(db.Model):
         return cls.query.filter(
             cls.wishlist_id == wishlist_id, cls.product_name == product_name
         ).all()
-        
+
     @classmethod
     def find_by_category(cls, category, wishlist_id):
         """Return all items matching category in a specific wishlist"""
-        logger.info("Processing lookup for category %s in wishlist %s...", category, wishlist_id)
+        logger.info(
+            "Processing lookup for category %s in wishlist %s...", category, wishlist_id
+        )
         return cls.query.filter(
-            cls.wishlist_id == wishlist_id, 
-            cls.category == category
+            cls.wishlist_id == wishlist_id, cls.category == category
         ).all()
-        
+
     @classmethod
     def find_by_price_range(cls, min_price, max_price, wishlist_id):
         """Return all items within a price range in a specific wishlist"""
-        logger.info("Processing lookup for price range %s-%s in wishlist %s...", 
-                   min_price, max_price, wishlist_id)
+        logger.info(
+            "Processing lookup for price range %s-%s in wishlist %s...",
+            min_price,
+            max_price,
+            wishlist_id,
+        )
         query = cls.query.filter(cls.wishlist_id == wishlist_id)
-        
+
         if min_price is not None:
             min_price = Decimal(str(min_price))
             query = query.filter(cls.product_price >= min_price)
         if max_price is not None:
             max_price = Decimal(str(max_price))
             query = query.filter(cls.product_price <= max_price)
-        
+
         return query.all()
-    
+
     @classmethod
-    def find_with_filters(cls, wishlist_id, product_name=None, category=None, 
-                          min_price=None, max_price=None):
+    def find_with_filters(
+        cls,
+        wishlist_id,
+        product_name=None,
+        category=None,
+        min_price=None,
+        max_price=None,
+    ):
         """
         Find items with multiple filters applied
         This is the most flexible method that combines all possible filters
         """
         logger.info("Processing lookup with filters in wishlist %s...", wishlist_id)
         query = cls.query.filter(cls.wishlist_id == wishlist_id)
-        
+
         if product_name:
             query = query.filter(cls.product_name == product_name)
         if category:
@@ -435,7 +448,7 @@ class WishlistItem(db.Model):
             query = query.filter(cls.product_price >= min_price)
         if max_price is not None:
             query = query.filter(cls.product_price <= max_price)
-        
+
         return query.all()
 
     @classmethod

@@ -878,6 +878,20 @@ class TestWishlistService(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.get_json(), {"status": "OK"})
 
+    def test_filter_wishlists_by_name(self):
+        """Test filtering wishlists by name (case-insensitive, partial match)"""
+        Wishlist(name="Holiday Fun", customer_id="1", is_public=True).create()
+        Wishlist(name="Birthday Bash", customer_id="2", is_public=False).create()
+        Wishlist(name="Holiday Shopping", customer_id="3", is_public=True).create()
+
+        resp = self.client.get(f"{BASE_URL}?name=holiday")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+
+        self.assertEqual(len(data), 2)
+        for wishlist in data:
+            self.assertIn("holiday", wishlist["name"].lower())
+
 
 ######################################################################
 #  T E S T   S A D   P A T H S

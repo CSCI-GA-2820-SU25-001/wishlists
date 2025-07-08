@@ -61,8 +61,14 @@ def index():
 @app.route("/wishlists", methods=["GET"])
 def list_wishlists():
     """
-    List all Wishlists
-    This endpoint will return all wishlists
+    List all Wishlists with optional filters
+
+    Query Parameters:
+    - customer_id: Filter wishlists by customer ID
+    - name: Case-insensitive partial match on wishlist name
+
+    Returns:
+    List of serialized wishlist objects
     """
     app.logger.info("List all wishlists")
 
