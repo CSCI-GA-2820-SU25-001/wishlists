@@ -46,21 +46,15 @@ jobs:
         run: |
           python -m pip install -U pip pipenv
           pipenv install --system --dev
-
-      - name: Run Code Quality Checks
+          
+      - name: Linting
         run: |
           # stop the build if there are Python syntax errors or undefined names
           flake8 service tests --count --select=E9,F63,F7,F82 --show-source --statistics
-          # check for complexity. The GitHub editor is 127 chars wide
+          # test for complexity. The GitHub editor is 127 chars wide
           flake8 service tests --count --max-complexity=10 --max-line-length=127 --statistics
-          # Run pylint on the service package
+          # Run pylint to catch other PEP8 errors
           pylint service tests --max-line-length=127
-
-      - name: Initialize Database Tables
-        run: flask db-create
-        env:
-          FLASK_APP: "wsgi:app"
-          DATABASE_URI: "postgresql+psycopg://postgres:pgs3cr3t@postgres:5432/testdb"
 
       - name: Run unit tests with pytest
         run: |
