@@ -39,17 +39,60 @@ def index():
             version="1.0",
             description="RESTful microservice for managing customer wishlists",
             endpoints={
-                "list_wishlists": "/wishlists",
-                "get_wishlist": "/wishlists/{id}",
+                # Wishlist CRUD Operations
+                "list_wishlists": "GET /wishlists",
+                "get_wishlist": "GET /wishlists/{id}",
                 "create_wishlist": "POST /wishlists",
                 "update_wishlist": "PUT /wishlists/{id}",
                 "delete_wishlist": "DELETE /wishlists/{id}",
-                "list_wishlist_items": "/wishlists/{id}/items",
-                "get_wishlist_item": "/wishlists/{id}/items/{item_id}",
+
+                # Wishlist Item CRUD Operations
+                "list_wishlist_items": "GET /wishlists/{id}/items",
+                "get_wishlist_item": "GET /wishlists/{id}/items/{item_id}",
                 "add_wishlist_item": "POST /wishlists/{id}/items",
                 "update_wishlist_item": "PUT /wishlists/{id}/items/{item_id}",
                 "delete_wishlist_item": "DELETE /wishlists/{id}/items/{item_id}",
+
+                # Action Endpoints
+                "clear_wishlist": "POST /wishlists/{id}/clear",
+                "publish_wishlist": "POST /wishlists/{id}/publish",
+                "unpublish_wishlist": "POST /wishlists/{id}/unpublish",
+                "copy_wishlist": "POST /wishlists/{id}/copy",
+                "like_wishlist_item": "POST /wishlists/{id}/items/{item_id}/like",
+
+                # Health Check
+                "health_check": "GET /health"
             },
+            query_parameters={
+                "wishlist_queries": {
+                    "customer_id": "Filter wishlists by customer ID",
+                    "name": "Filter wishlists by name (case-insensitive partial match)",
+                    "is_public": "Filter wishlists by visibility (true/false)"
+                },
+                "item_queries": {
+                    "product_name": "Filter items by exact product name",
+                    "category": "Filter items by category",
+                    "min_price": "Filter items with minimum price",
+                    "max_price": "Filter items with maximum price"
+                }
+            },
+            examples={
+                "wishlist_queries": [
+                    "GET /wishlists?customer_id=customer123",
+                    "GET /wishlists?name=holiday",
+                    "GET /wishlists?is_public=true"
+                ],
+                "item_queries": [
+                    "GET /wishlists/{id}/items?category=electronics",
+                    "GET /wishlists/{id}/items?min_price=100&max_price=500",
+                    "GET /wishlists/{id}/items?category=electronics&min_price=100"
+                ],
+                "actions": [
+                    "POST /wishlists/{id}/clear - Remove all items from wishlist",
+                    "POST /wishlists/{id}/publish - Make wishlist public",
+                    "POST /wishlists/{id}/copy - Create a copy of the wishlist"
+                ]
+            }
         ),
         status.HTTP_200_OK,
     )
