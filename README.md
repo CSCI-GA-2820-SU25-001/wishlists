@@ -2,8 +2,8 @@
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python](https://img.shields.io/badge/Language-Python-blue.svg)](https://python.org/)
-[![Build Status](https://github.com/CSCI-GA-2820-FA24-003/wishlists/actions/workflows/ci.yml/badge.svg)](https://github.com/CSCI-GA-2820-FA24-003/wishlists/actions)
-[![codecov](https://codecov.io/gh/CSCI-GA-2820-FA24-003/wishlists/branch/master/graph/badge.svg)](https://codecov.io/gh/CSCI-GA-2820-FA24-003/wishlists)
+[![Build Status](https://github.com/CSCI-GA-2820-SU25-001/wishlists/actions/workflows/ci.yml/badge.svg)](https://github.com/CSCI-GA-2820-SU25-001/wishlists/actions)
+[![codecov](https://codecov.io/gh/CSCI-GA-2820-SU25-001/wishlists/branch/master/graph/badge.svg)](https://codecov.io/gh/CSCI-GA-2820-SU25-001/wishlists)
 ## Overview
 
 A RESTful microservice for managing customer wishlists allows customers to create, manage, and organize their wishlists with items. This service provides a complete REST API for features such as creating wishlists, adding or removing items, and listing wishlist contents.
