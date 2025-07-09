@@ -21,12 +21,12 @@ TestWishlist API Service Test Suite
 # pylint: disable=duplicate-code
 import os
 import logging
+from decimal import Decimal
 from unittest import TestCase
 from wsgi import app
 from service.common import status
 from service.wishlist import db, Wishlist
 from tests.factories import WishlistFactory, WishlistItemFactory
-from decimal import Decimal
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"

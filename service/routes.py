@@ -176,6 +176,9 @@ def update_wishlist(wishlist_id):
 ######################################################################
 @app.route("/wishlists/<int:wishlist_id>", methods=["DELETE"])
 def delete_wishlist(wishlist_id):
+    """
+    Delete a Wishlist
+    """
     app.logger.info("Request to delete wishlist with id: %s", wishlist_id)
 
     wishlist = Wishlist.find(wishlist_id)
@@ -269,7 +272,7 @@ def list_wishlist_items(wishlist_id):
             product_name=product_name,
             category=category,
             min_price=min_price,
-            max_price=max_price,
+            max_price=max_price
         )
 
         if not items:

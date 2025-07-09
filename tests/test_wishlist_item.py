@@ -4,11 +4,11 @@ Test cases for WishlistItem Model
 
 import logging
 import os
+from decimal import Decimal
 from unittest import TestCase
 from wsgi import app
 from service.wishlist import Wishlist, WishlistItem, db, DataValidationError
 from tests.factories import WishlistItemFactory, WishlistFactory
-from decimal import Decimal
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/postgres"
@@ -514,22 +514,22 @@ class TestWishlistItem(TestCase):
         # Create a wishlist
         wishlist = WishlistFactory()
         wishlist.create()
-        
+
         # Create items with different categories
         electronics_item1 = WishlistItemFactory(wishlist=wishlist, category="electronics", product_name="iPhone")
         electronics_item2 = WishlistItemFactory(wishlist=wishlist, category="electronics", product_name="Laptop")
         food_item = WishlistItemFactory(wishlist=wishlist, category="food", product_name="Pizza")
-        
+
         # Create them in the database
         for item in [electronics_item1, electronics_item2, food_item]:
             item.create()
-        
+
         # Test finding electronics items
         electronics_items = WishlistItem.find_by_category("electronics", wishlist.id)
         self.assertEqual(len(electronics_items), 2)
         for item in electronics_items:
             self.assertEqual(item.category, "electronics")
-        
+
         # Test finding food items
         food_items = WishlistItem.find_by_category("food", wishlist.id)
         self.assertEqual(len(food_items), 1)
@@ -540,11 +540,11 @@ class TestWishlistItem(TestCase):
         """It should return empty list when no items match the category"""
         wishlist = WishlistFactory()
         wishlist.create()
-        
+
         # Create an item with a different category
         item = WishlistItemFactory(wishlist=wishlist, category="electronics")
         item.create()
-        
+
         # Search for a non-existent category
         results = WishlistItem.find_by_category("nonexistent", wishlist.id)
         self.assertEqual(results, [])
@@ -556,13 +556,13 @@ class TestWishlistItem(TestCase):
         wishlist2 = WishlistFactory()
         wishlist1.create()
         wishlist2.create()
-        
+
         # Create items in different wishlists with same category
         item1 = WishlistItemFactory(wishlist=wishlist1, category="electronics")
         item2 = WishlistItemFactory(wishlist=wishlist2, category="electronics")
         item1.create()
         item2.create()
-        
+
         # Should only find items from wishlist1
         results = WishlistItem.find_by_category("electronics", wishlist1.id)
         self.assertEqual(len(results), 1)
@@ -572,15 +572,15 @@ class TestWishlistItem(TestCase):
         """It should find items within specified price range"""
         wishlist = WishlistFactory()
         wishlist.create()
-        
+
         # Create items with different prices
         cheap_item = WishlistItemFactory(wishlist=wishlist, product_price=Decimal("25.00"), product_name="Cheap")
         medium_item = WishlistItemFactory(wishlist=wishlist, product_price=Decimal("75.00"), product_name="Medium")
         expensive_item = WishlistItemFactory(wishlist=wishlist, product_price=Decimal("150.00"), product_name="Expensive")
-        
+
         for item in [cheap_item, medium_item, expensive_item]:
             item.create()
-        
+
         # Test range 50-100 (should get medium item only)
         results = WishlistItem.find_by_price_range(50, 100, wishlist.id)
         self.assertEqual(len(results), 1)
@@ -591,13 +591,13 @@ class TestWishlistItem(TestCase):
         """It should find items above minimum price when max_price is None"""
         wishlist = WishlistFactory()
         wishlist.create()
-        
+
         cheap_item = WishlistItemFactory(wishlist=wishlist, product_price=Decimal("25.00"))
         expensive_item = WishlistItemFactory(wishlist=wishlist, product_price=Decimal("150.00"))
-        
+
         for item in [cheap_item, expensive_item]:
             item.create()
-        
+
         # Find items with price >= 50 (should get expensive item only)
         results = WishlistItem.find_by_price_range(50, None, wishlist.id)
         self.assertEqual(len(results), 1)
@@ -607,13 +607,13 @@ class TestWishlistItem(TestCase):
         """It should find items below maximum price when min_price is None"""
         wishlist = WishlistFactory()
         wishlist.create()
-        
+
         cheap_item = WishlistItemFactory(wishlist=wishlist, product_price=Decimal("25.00"))
         expensive_item = WishlistItemFactory(wishlist=wishlist, product_price=Decimal("150.00"))
-        
+
         for item in [cheap_item, expensive_item]:
             item.create()
-        
+
         # Find items with price <= 50 (should get cheap item only)
         results = WishlistItem.find_by_price_range(None, 50, wishlist.id)
         self.assertEqual(len(results), 1)
@@ -623,13 +623,13 @@ class TestWishlistItem(TestCase):
         """It should return all items when both min and max are None"""
         wishlist = WishlistFactory()
         wishlist.create()
-        
+
         item1 = WishlistItemFactory(wishlist=wishlist, product_price=Decimal("25.00"))
         item2 = WishlistItemFactory(wishlist=wishlist, product_price=Decimal("150.00"))
-        
+
         for item in [item1, item2]:
             item.create()
-        
+
         # Find all items (no price limits)
         results = WishlistItem.find_by_price_range(None, None, wishlist.id)
         self.assertEqual(len(results), 2)
@@ -638,11 +638,11 @@ class TestWishlistItem(TestCase):
         """It should return empty list when no items match the price range"""
         wishlist = WishlistFactory()
         wishlist.create()
-        
+
         # Create items outside the search range
         item = WishlistItemFactory(wishlist=wishlist, product_price=Decimal("200.00"))
         item.create()
-        
+
         # Search for items in 50-100 range
         results = WishlistItem.find_by_price_range(50, 100, wishlist.id)
         self.assertEqual(results, [])
@@ -651,7 +651,7 @@ class TestWishlistItem(TestCase):
         """It should find items using all filter parameters combined"""
         wishlist = WishlistFactory()
         wishlist.create()
-        
+
         # Create the target item that matches all criteria
         target_item = WishlistItemFactory(
             wishlist=wishlist,
@@ -659,7 +659,7 @@ class TestWishlistItem(TestCase):
             category="electronics",
             product_price=Decimal("999.00")
         )
-        
+
         # Create items that match only some criteria
         wrong_name = WishlistItemFactory(
             wishlist=wishlist,
@@ -679,10 +679,10 @@ class TestWishlistItem(TestCase):
             category="electronics",
             product_price=Decimal("50.00")
         )
-        
+
         for item in [target_item, wrong_name, wrong_category, wrong_price]:
             item.create()
-        
+
         # Search with all filters
         results = WishlistItem.find_with_filters(
             wishlist_id=wishlist.id,
@@ -691,7 +691,7 @@ class TestWishlistItem(TestCase):
             min_price=500,
             max_price=1500
         )
-        
+
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0].product_name, "iPhone 15")
         self.assertEqual(results[0].category, "electronics")
@@ -701,26 +701,26 @@ class TestWishlistItem(TestCase):
         """It should work with only some filter parameters specified"""
         wishlist = WishlistFactory()
         wishlist.create()
-        
+
         item1 = WishlistItemFactory(wishlist=wishlist, category="electronics", product_price=Decimal("100.00"))
         item2 = WishlistItemFactory(wishlist=wishlist, category="electronics", product_price=Decimal("200.00"))
         item3 = WishlistItemFactory(wishlist=wishlist, category="food", product_price=Decimal("150.00"))
-        
+
         for item in [item1, item2, item3]:
             item.create()
-        
+
         # Filter by category only
         results = WishlistItem.find_with_filters(wishlist_id=wishlist.id, category="electronics")
         self.assertEqual(len(results), 2)
-        
+
         # Filter by price range only
         results = WishlistItem.find_with_filters(wishlist_id=wishlist.id, min_price=150)
         self.assertEqual(len(results), 2)  # item2 and item3
-        
+
         # Filter by category and min_price
         results = WishlistItem.find_with_filters(
-            wishlist_id=wishlist.id, 
-            category="electronics", 
+            wishlist_id=wishlist.id,
+            category="electronics",
             min_price=150
         )
         self.assertEqual(len(results), 1)  # Only item2
@@ -729,13 +729,13 @@ class TestWishlistItem(TestCase):
         """It should return all items when no filters are specified"""
         wishlist = WishlistFactory()
         wishlist.create()
-        
+
         item1 = WishlistItemFactory(wishlist=wishlist)
         item2 = WishlistItemFactory(wishlist=wishlist)
-        
+
         for item in [item1, item2]:
             item.create()
-        
+
         # No filters - should return all items
         results = WishlistItem.find_with_filters(wishlist_id=wishlist.id)
         self.assertEqual(len(results), 2)
@@ -744,10 +744,10 @@ class TestWishlistItem(TestCase):
         """It should return empty list when no items match the filters"""
         wishlist = WishlistFactory()
         wishlist.create()
-        
+
         item = WishlistItemFactory(wishlist=wishlist, category="electronics")
         item.create()
-        
+
         # Search for non-matching filters
         results = WishlistItem.find_with_filters(
             wishlist_id=wishlist.id,
@@ -759,19 +759,19 @@ class TestWishlistItem(TestCase):
         """It should handle None category values correctly"""
         wishlist = WishlistFactory()
         wishlist.create()
-        
+
         # Create items with and without categories
         item_with_category = WishlistItemFactory(wishlist=wishlist, category="electronics")
         item_without_category = WishlistItemFactory(wishlist=wishlist, category=None)
-        
+
         for item in [item_with_category, item_without_category]:
             item.create()
-        
+
         # Filter by specific category
         results = WishlistItem.find_with_filters(wishlist_id=wishlist.id, category="electronics")
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0].category, "electronics")
-        
+
         # No category filter should return both
         results = WishlistItem.find_with_filters(wishlist_id=wishlist.id)
         self.assertEqual(len(results), 2)
@@ -782,7 +782,7 @@ class TestWishlistItem(TestCase):
         item_with_category = WishlistItemFactory(category="electronics")
         serialized = item_with_category.serialize()
         self.assertEqual(serialized["category"], "electronics")
-        
+
         # Test with None category
         item_without_category = WishlistItemFactory(category=None)
         serialized = item_without_category.serialize()
@@ -799,11 +799,11 @@ class TestWishlistItem(TestCase):
             "product_price": 100.0,
             "category": "electronics"
         }
-        
+
         item = WishlistItem()
         item.deserialize(data_with_category)
         self.assertEqual(item.category, "electronics")
-        
+
         # Test without category field (should default to None)
         data_without_category = {
             "wishlist_id": 1,
@@ -813,7 +813,7 @@ class TestWishlistItem(TestCase):
             "product_price": 100.0
             # Note: no category field
         }
-        
+
         item2 = WishlistItem()
         item2.deserialize(data_without_category)
         self.assertIsNone(item2.category)
