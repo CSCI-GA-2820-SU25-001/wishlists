@@ -69,6 +69,8 @@ def list_wishlists():
     name = request.args.get("name")
     is_public = request.args.get("is_public")
 
+    wishlists = []  # Initialize to satisfy pylint
+
     if customer_id:
         app.logger.info("Find by customer_id: %s", customer_id)
         wishlists = Wishlist.find_for_user(customer_id)
@@ -176,6 +178,9 @@ def update_wishlist(wishlist_id):
 ######################################################################
 @app.route("/wishlists/<int:wishlist_id>", methods=["DELETE"])
 def delete_wishlist(wishlist_id):
+    """
+    Delete a Wishlist
+    """
     app.logger.info("Request to delete wishlist with id: %s", wishlist_id)
 
     wishlist = Wishlist.find(wishlist_id)

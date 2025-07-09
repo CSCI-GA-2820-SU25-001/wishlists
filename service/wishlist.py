@@ -5,9 +5,9 @@ This module contains methods for serialization, deserialization, and database op
 """
 
 from datetime import datetime
+from decimal import Decimal
 import logging
 from flask_sqlalchemy import SQLAlchemy
-from decimal import Decimal
 
 logger = logging.getLogger("flask.app")
 
@@ -218,24 +218,24 @@ class Wishlist(db.Model):
         """Return all wishlists for a specific user"""
         logger.info("Processing lookup for user %s ...", customer_id)
         return cls.query.filter(cls.customer_id == customer_id).all()
-    
+
     @classmethod
     def find_by_visibility(cls, is_public):
         """Return all wishlists based on visibility"""
         logger.info("Processing lookup for visibility %s ...", is_public)
         return cls.query.filter(cls.is_public == is_public).all()
-    
+
     @classmethod
     def find_public_wishlists(cls):
         """Return all public wishlists"""
         logger.info("Processing lookup for public wishlists ...")
-        return cls.query.filter(cls.is_public == True).all()
-    
+        return cls.query.filter(cls.is_public.is_(True)).all()
+
     @classmethod
     def find_private_wishlists(cls):
         """Return all private wishlists"""
         logger.info("Processing lookup for private wishlists ...")
-        return cls.query.filter(cls.is_public == False).all()
+        return cls.query.filter(cls.is_public.is_(False)).all()
 
 
 class WishlistItem(db.Model):
@@ -391,42 +391,50 @@ class WishlistItem(db.Model):
         return cls.query.filter(
             cls.wishlist_id == wishlist_id, cls.product_name == product_name
         ).all()
-        
+
     @classmethod
     def find_by_category(cls, category, wishlist_id):
         """Return all items matching category in a specific wishlist"""
         logger.info("Processing lookup for category %s in wishlist %s...", category, wishlist_id)
         return cls.query.filter(
-            cls.wishlist_id == wishlist_id, 
+            cls.wishlist_id == wishlist_id,
             cls.category == category
         ).all()
-        
+
     @classmethod
     def find_by_price_range(cls, min_price, max_price, wishlist_id):
         """Return all items within a price range in a specific wishlist"""
-        logger.info("Processing lookup for price range %s-%s in wishlist %s...", 
-                   min_price, max_price, wishlist_id)
+        logger.info("Processing lookup for price range %s-%s in wishlist %s...",
+                    min_price, max_price, wishlist_id)
         query = cls.query.filter(cls.wishlist_id == wishlist_id)
-        
+
         if min_price is not None:
             min_price = Decimal(str(min_price))
             query = query.filter(cls.product_price >= min_price)
         if max_price is not None:
             max_price = Decimal(str(max_price))
             query = query.filter(cls.product_price <= max_price)
-        
+
         return query.all()
-    
+
     @classmethod
-    def find_with_filters(cls, wishlist_id, product_name=None, category=None, 
-                          min_price=None, max_price=None):
+    def find_with_filters(cls, **filters):
         """
         Find items with multiple filters applied
         This is the most flexible method that combines all possible filters
         """
+        wishlist_id = filters.get('wishlist_id')
+        if not wishlist_id:
+            raise ValueError("wishlist_id is required")
+
         logger.info("Processing lookup with filters in wishlist %s...", wishlist_id)
         query = cls.query.filter(cls.wishlist_id == wishlist_id)
-        
+
+        product_name = filters.get('product_name')
+        category = filters.get('category')
+        min_price = filters.get('min_price')
+        max_price = filters.get('max_price')
+
         if product_name:
             query = query.filter(cls.product_name == product_name)
         if category:
@@ -435,7 +443,7 @@ class WishlistItem(db.Model):
             query = query.filter(cls.product_price >= min_price)
         if max_price is not None:
             query = query.filter(cls.product_price <= max_price)
-        
+
         return query.all()
 
     @classmethod
