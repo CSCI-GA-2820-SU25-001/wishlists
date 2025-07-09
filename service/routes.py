@@ -69,6 +69,8 @@ def list_wishlists():
     name = request.args.get("name")
     is_public = request.args.get("is_public")
 
+    wishlists = []  # Initialize to satisfy pylint
+
     if customer_id:
         app.logger.info("Find by customer_id: %s", customer_id)
         wishlists = Wishlist.find_for_user(customer_id)
@@ -272,7 +274,7 @@ def list_wishlist_items(wishlist_id):
             product_name=product_name,
             category=category,
             min_price=min_price,
-            max_price=max_price
+            max_price=max_price,
         )
 
         if not items:
