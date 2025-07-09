@@ -325,7 +325,7 @@ class WishlistItem(db.Model):
             self.category = data.get("category", None)
             self.created_at = data.get("created_at", None)
             self.updated_at = data.get("updated_at", None)
-            self.likes = data.get("likes", 0) 
+            self.likes = data.get("likes", 0)
             if self.product_name is None or not isinstance(self.product_name, str):
                 raise DataValidationError(
                     "Invalid WishlistItem: product_name must be a string"
