@@ -430,8 +430,36 @@ def get_wishlist_item(wishlist_id, item_id):
 
 
 ######################################################################
-# CLEAR ALL ITEMS FROM A WISHLIST (ACTION)
+#  U T I L I T Y   F U N C T I O N S
 ######################################################################
+
+
+######################################################################
+# Checks the ContentType of a request
+######################################################################
+def check_content_type(content_type) -> None:
+    """Checks that the media type is correct"""
+    if "Content-Type" not in request.headers:
+        app.logger.error("No Content-Type specified.")
+        abort(
+            status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            f"Content-Type must be {content_type}",
+        )
+
+    if request.headers["Content-Type"] == content_type:
+        return
+
+    app.logger.error("Invalid Content-Type: %s", request.headers["Content-Type"])
+    abort(
+        status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+        f"Content-Type must be {content_type}",
+    )
+
+######################################################################
+#  A C T I O N   F U N C T I O N S
+######################################################################
+
+
 @app.route("/wishlists/<int:wishlist_id>/clear", methods=["POST"])
 def clear_wishlist(wishlist_id):
     """
@@ -470,27 +498,121 @@ def clear_wishlist(wishlist_id):
 
 
 ######################################################################
-#  U T I L I T Y   F U N C T I O N S
+# Make it public (ACTION)
 ######################################################################
-
-
-######################################################################
-# Checks the ContentType of a request
-######################################################################
-def check_content_type(content_type) -> None:
-    """Checks that the media type is correct"""
-    if "Content-Type" not in request.headers:
-        app.logger.error("No Content-Type specified.")
+@app.route("/wishlists/<int:wishlist_id>/publish", methods=["POST"])
+def publish_wishlist(wishlist_id):
+    """
+    Action: Publish a wishlist (set is_public to True)
+    """
+    app.logger.info("Request to publish wishlist %s", wishlist_id)
+    wishlist = Wishlist.find(wishlist_id)
+    if not wishlist:
         abort(
-            status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            f"Content-Type must be {content_type}",
+            status.HTTP_404_NOT_FOUND,
+            f"Wishlist with id '{wishlist_id}' could not be found.",
         )
+    wishlist.is_public = True
+    wishlist.update()
+    return jsonify({
+        "message": f"Wishlist {wishlist_id} published.",
+        "wishlist_id": wishlist.id,
+        "is_public": wishlist.is_public
+    }), status.HTTP_200_OK
 
-    if request.headers["Content-Type"] == content_type:
-        return
 
-    app.logger.error("Invalid Content-Type: %s", request.headers["Content-Type"])
-    abort(
-        status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-        f"Content-Type must be {content_type}",
+######################################################################
+# Make it private (ACTION)
+######################################################################
+@app.route("/wishlists/<int:wishlist_id>/unpublish", methods=["POST"])
+def unpublish_wishlist(wishlist_id):
+    """
+    Action: Unpublish a wishlist (set is_public to False)
+    """
+    app.logger.info("Request to unpublish wishlist %s", wishlist_id)
+    wishlist = Wishlist.find(wishlist_id)
+    if not wishlist:
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"Wishlist with id '{wishlist_id}' could not be found.",
+        )
+    wishlist.is_public = False
+    wishlist.update()
+    return jsonify({
+        "message": f"Wishlist {wishlist_id} unpublished.",
+        "wishlist_id": wishlist.id,
+        "is_public": wishlist.is_public
+    }), status.HTTP_200_OK
+
+
+######################################################################
+# Like a wishlist (ACTION)
+######################################################################
+@app.route("/wishlists/<int:wishlist_id>/items/<int:item_id>/like", methods=["POST"])
+def like_wishlist_item(wishlist_id, item_id):
+    """
+    Action: Like a product in a wishlist
+    """
+    app.logger.info("Request to like item %s in wishlist %s", item_id, wishlist_id)
+    item = WishlistItem.find(item_id)
+    if not item or item.wishlist_id != wishlist_id:
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"Item with id '{item_id}' could not be found in Wishlist with id '{wishlist_id}'.",
+        )
+    item.likes = (item.likes or 0) + 1
+    item.update()
+    return jsonify({
+        "message": f"Item {item_id} in wishlist {wishlist_id} liked.",
+        "item_id": item.id,
+        "wishlist_id": item.wishlist_id,
+        "likes": item.likes
+    }), status.HTTP_200_OK
+
+
+######################################################################
+# Copy a wishlist (ACTION)
+######################################################################
+@app.route("/wishlists/<int:wishlist_id>/copy", methods=["POST"])
+def copy_wishlist(wishlist_id):
+    """
+    Action: Copy a wishlist and all its items
+    """
+    app.logger.info("Request to copy wishlist %s", wishlist_id)
+    wishlist = Wishlist.find(wishlist_id)
+    if not wishlist:
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"Wishlist with id '{wishlist_id}' could not be found.",
+        )
+    # Create a new wishlist with similar attributes
+    new_wishlist = Wishlist(
+        name=f"{wishlist.name} (Copy)",
+        description=wishlist.description,
+        customer_id=wishlist.customer_id,
+        is_public=wishlist.is_public,
+    )
+    new_wishlist.create()
+    # Copy all items
+    for item in wishlist.wishlist_items:
+        new_item = WishlistItem(
+            wishlist_id=new_wishlist.id,
+            product_id=item.product_id,
+            product_name=item.product_name,
+            product_description=item.product_description,
+            product_price=item.product_price,
+            category=item.category,
+            quantity=item.quantity,
+            likes=item.likes,
+        )
+        new_item.create()
+    app.logger.info("Wishlist %s copied to new wishlist %s", wishlist_id, new_wishlist.id)
+    return (
+        jsonify({
+            "message": f"Wishlist {wishlist_id} copied to new wishlist {new_wishlist.id}.",
+            "original_wishlist_id": wishlist_id,
+            "new_wishlist_id": new_wishlist.id,
+            "wishlist": new_wishlist.serialize(),
+        }),
+        status.HTTP_201_CREATED,
     )
