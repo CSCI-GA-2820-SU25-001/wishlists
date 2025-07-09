@@ -19,6 +19,7 @@ TestWishlist Error Handling and Sad Paths API Service Test Suite
 """
 
 # pylint: disable=duplicate-code
+# pylint: disable=too-many-lines
 from service.common import status
 from tests.test_base import BaseTestCase, BASE_URL
 from tests.factories import WishlistFactory, WishlistItemFactory
