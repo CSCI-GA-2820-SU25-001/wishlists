@@ -5,9 +5,9 @@ This module contains methods for serialization, deserialization, and database op
 """
 
 from datetime import datetime
+from decimal import Decimal
 import logging
 from flask_sqlalchemy import SQLAlchemy
-from decimal import Decimal
 
 logger = logging.getLogger("flask.app")
 
@@ -231,13 +231,13 @@ class Wishlist(db.Model):
     def find_public_wishlists(cls):
         """Return all public wishlists"""
         logger.info("Processing lookup for public wishlists ...")
-        return cls.query.filter(cls.is_public == True).all()
+        return cls.query.filter(cls.is_public.is_(True)).all()
 
     @classmethod
     def find_private_wishlists(cls):
         """Return all private wishlists"""
         logger.info("Processing lookup for private wishlists ...")
-        return cls.query.filter(cls.is_public == False).all()
+        return cls.query.filter(cls.is_public.is_(False)).all()
 
 
 class WishlistItem(db.Model):
@@ -255,6 +255,8 @@ class WishlistItem(db.Model):
     created_at = timestamp field to store when wishlist item was created
     updated_at = timestamp field to store when wishlist item was last updated
     quantity = How many of this product are desired in the wishlist
+    like = boolean flag to indicate if the item is liked by the user
+
     """
 
     # Table Schema
@@ -273,6 +275,7 @@ class WishlistItem(db.Model):
         db.DateTime, default=db.func.now(), onupdate=db.func.now(), nullable=False
     )
     quantity = db.Column(db.Integer, nullable=False, default=1)
+    likes = db.Column(db.Integer, nullable=False, default=0)
 
     def __repr__(self):
         return (
@@ -301,6 +304,7 @@ class WishlistItem(db.Model):
             "category": self.category,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": (self.updated_at.isoformat() if self.updated_at else None),
+            "likes": self.likes,
         }
 
     def deserialize(self, data):
@@ -322,6 +326,7 @@ class WishlistItem(db.Model):
             self.category = data.get("category", None)
             self.created_at = data.get("created_at", None)
             self.updated_at = data.get("updated_at", None)
+            self.likes = data.get("likes", 0)
             if self.product_name is None or not isinstance(self.product_name, str):
                 raise DataValidationError(
                     "Invalid WishlistItem: product_name must be a string"
@@ -425,20 +430,22 @@ class WishlistItem(db.Model):
         return query.all()
 
     @classmethod
-    def find_with_filters(
-        cls,
-        wishlist_id,
-        product_name=None,
-        category=None,
-        min_price=None,
-        max_price=None,
-    ):
+    def find_with_filters(cls, **filters):
         """
         Find items with multiple filters applied
         This is the most flexible method that combines all possible filters
         """
+        wishlist_id = filters.get("wishlist_id")
+        if not wishlist_id:
+            raise ValueError("wishlist_id is required")
+
         logger.info("Processing lookup with filters in wishlist %s...", wishlist_id)
         query = cls.query.filter(cls.wishlist_id == wishlist_id)
+
+        product_name = filters.get("product_name")
+        category = filters.get("category")
+        min_price = filters.get("min_price")
+        max_price = filters.get("max_price")
 
         if product_name:
             query = query.filter(cls.product_name == product_name)

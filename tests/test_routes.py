@@ -21,12 +21,12 @@ TestWishlist API Service Test Suite
 # pylint: disable=duplicate-code
 import os
 import logging
+from decimal import Decimal
 from unittest import TestCase
 from wsgi import app
 from service.common import status
 from service.wishlist import db, Wishlist
 from tests.factories import WishlistFactory, WishlistItemFactory
-from decimal import Decimal
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
@@ -892,6 +892,31 @@ class TestWishlistService(TestCase):
         for wishlist in data:
             self.assertIn("holiday", wishlist["name"].lower())
 
+    def test_filter_wishlists_by_is_public(self):
+        """It should return Wishlists filtered by is_public value"""
+        # Create one public and one private wishlist
+        public_wishlist = WishlistFactory(is_public=True)
+        private_wishlist = WishlistFactory(is_public=False)
+
+        self.client.post(BASE_URL, json=public_wishlist.serialize())
+        self.client.post(BASE_URL, json=private_wishlist.serialize())
+
+        # Test filtering for public wishlists
+        resp = self.client.get(f"{BASE_URL}?is_public=true")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertGreaterEqual(len(data), 1)
+        for item in data:
+            self.assertTrue(item["is_public"])
+
+        # Test filtering for private wishlists
+        resp = self.client.get(f"{BASE_URL}?is_public=false")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertGreaterEqual(len(data), 1)
+        for item in data:
+            self.assertFalse(item["is_public"])
+
 
 ######################################################################
 #  T E S T   S A D   P A T H S
@@ -1008,3 +1033,106 @@ class TestSadPaths(TestCase):
         # check wishlist_id match
         response = self.client.get(f"{BASE_URL}/99999/items/99999")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_publish_wishlist(self):
+        """It should publish a wishlist (set is_public to True)"""
+        wishlist = WishlistFactory(is_public=False)
+        wishlist.create()
+        resp = self.client.post(f"{BASE_URL}/{wishlist.id}/publish")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertTrue(data["is_public"])
+        self.assertIn("published", data["message"])
+
+    def test_unpublish_wishlist(self):
+        """It should unpublish a wishlist (set is_public to False)"""
+        wishlist = WishlistFactory(is_public=True)
+        wishlist.create()
+        resp = self.client.post(f"{BASE_URL}/{wishlist.id}/unpublish")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertFalse(data["is_public"])
+        self.assertIn("unpublished", data["message"])
+
+    def test_publish_wishlist_not_found(self):
+        """It should return 404 when publishing a non-existent wishlist"""
+        resp = self.client.post(f"{BASE_URL}/99999/publish")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertIn("could not be found", resp.get_data(as_text=True))
+
+    def test_unpublish_wishlist_not_found(self):
+        """It should return 404 when unpublishing a non-existent wishlist"""
+        resp = self.client.post(f"{BASE_URL}/99999/unpublish")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertIn("could not be found", resp.get_data(as_text=True))
+
+    def test_like_wishlist_item(self):
+        """It should like a wishlist item (increment likes)"""
+        # Create a wishlist and add an item
+        wishlist = WishlistFactory()
+        wishlist.create()
+        item = WishlistItemFactory(wishlist=wishlist, likes=0)
+        item.create()
+
+        # Like the item
+        resp = self.client.post(f"{BASE_URL}/{wishlist.id}/items/{item.id}/like")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(data["item_id"], item.id)
+        self.assertEqual(data["wishlist_id"], wishlist.id)
+        self.assertEqual(data["likes"], 1)
+        self.assertIn("liked", data["message"])
+
+        # Like again to check increment
+        resp = self.client.post(f"{BASE_URL}/{wishlist.id}/items/{item.id}/like")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(data["likes"], 2)
+
+    def test_copy_wishlist(self):
+        """It should copy a wishlist and all its items"""
+        # Create a wishlist with items
+        wishlist = WishlistFactory()
+        wishlist.create()
+        item1 = WishlistItemFactory(wishlist=wishlist)
+        item1.create()
+        item2 = WishlistItemFactory(wishlist=wishlist)
+        item2.create()
+
+        # Copy the wishlist
+        resp = self.client.post(f"{BASE_URL}/{wishlist.id}/copy")
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        data = resp.get_json()
+        self.assertIn("copied", data["message"])
+        self.assertNotEqual(data["original_wishlist_id"], data["new_wishlist_id"])
+        self.assertEqual(len(data["wishlist"]["wishlist_items"]), 2)
+        # Ensure copied items are not the same id as original
+        original_item_ids = {item1.id, item2.id}
+        copied_item_ids = {item["id"] for item in data["wishlist"]["wishlist_items"]}
+        self.assertTrue(copied_item_ids.isdisjoint(original_item_ids))
+
+    def test_copy_wishlist_not_found(self):
+        """It should return 404 when copying a non-existent wishlist"""
+        resp = self.client.post(f"{BASE_URL}/99999/copy")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertIn("could not be found", resp.get_data(as_text=True))
+
+    def test_like_wishlist_item_not_found(self):
+        """It should return 404 when liking a non-existent item"""
+        wishlist = WishlistFactory()
+        wishlist.create()
+        resp = self.client.post(f"{BASE_URL}/{wishlist.id}/items/99999/like")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertIn("could not be found", resp.get_data(as_text=True))
+
+    def test_like_wishlist_item_wrong_wishlist(self):
+        """It should return 404 when liking an item not in the wishlist"""
+        wishlist1 = WishlistFactory()
+        wishlist1.create()
+        wishlist2 = WishlistFactory()
+        wishlist2.create()
+        item = WishlistItemFactory(wishlist=wishlist1)
+        item.create()
+        resp = self.client.post(f"{BASE_URL}/{wishlist2.id}/items/{item.id}/like")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertIn("could not be found in Wishlist", resp.get_data(as_text=True))
