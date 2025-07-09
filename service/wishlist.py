@@ -253,6 +253,8 @@ class WishlistItem(db.Model):
     created_at = timestamp field to store when wishlist item was created
     updated_at = timestamp field to store when wishlist item was last updated
     quantity = How many of this product are desired in the wishlist
+    like = boolean flag to indicate if the item is liked by the user
+
     """
 
     # Table Schema
@@ -271,6 +273,7 @@ class WishlistItem(db.Model):
         db.DateTime, default=db.func.now(), onupdate=db.func.now(), nullable=False
     )
     quantity = db.Column(db.Integer, nullable=False, default=1)
+    likes = db.Column(db.Integer, nullable=False, default=0)
 
     def __repr__(self):
         return (
@@ -299,6 +302,8 @@ class WishlistItem(db.Model):
             "category": self.category,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": (self.updated_at.isoformat() if self.updated_at else None),
+            "likes": self.likes
+
         }
 
     def deserialize(self, data):
@@ -320,6 +325,7 @@ class WishlistItem(db.Model):
             self.category = data.get("category", None)
             self.created_at = data.get("created_at", None)
             self.updated_at = data.get("updated_at", None)
+            self.likes = data.get("likes", 0) 
             if self.product_name is None or not isinstance(self.product_name, str):
                 raise DataValidationError(
                     "Invalid WishlistItem: product_name must be a string"
