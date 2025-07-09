@@ -209,9 +209,11 @@ class Wishlist(db.Model):
 
     @classmethod
     def find_by_name(cls, name):
-        """Return all wishlists with the given name"""
-        logger.info("Processing name query for %s ...", name)
-        return cls.query.filter(cls.name == name).all()
+        """Return all wishlists whose names contain the given term (case-insensitive)"""
+        logger.info(
+            "Processing partial, case-insensitive name query for '%s' ...", name
+        )
+        return cls.query.filter(cls.name.ilike(f"%{name}%")).all()
 
     @classmethod
     def find_for_user(cls, customer_id):
@@ -302,8 +304,7 @@ class WishlistItem(db.Model):
             "category": self.category,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": (self.updated_at.isoformat() if self.updated_at else None),
-            "likes": self.likes
-
+            "likes": self.likes,
         }
 
     def deserialize(self, data):
@@ -401,17 +402,22 @@ class WishlistItem(db.Model):
     @classmethod
     def find_by_category(cls, category, wishlist_id):
         """Return all items matching category in a specific wishlist"""
-        logger.info("Processing lookup for category %s in wishlist %s...", category, wishlist_id)
+        logger.info(
+            "Processing lookup for category %s in wishlist %s...", category, wishlist_id
+        )
         return cls.query.filter(
-            cls.wishlist_id == wishlist_id,
-            cls.category == category
+            cls.wishlist_id == wishlist_id, cls.category == category
         ).all()
 
     @classmethod
     def find_by_price_range(cls, min_price, max_price, wishlist_id):
         """Return all items within a price range in a specific wishlist"""
-        logger.info("Processing lookup for price range %s-%s in wishlist %s...",
-                    min_price, max_price, wishlist_id)
+        logger.info(
+            "Processing lookup for price range %s-%s in wishlist %s...",
+            min_price,
+            max_price,
+            wishlist_id,
+        )
         query = cls.query.filter(cls.wishlist_id == wishlist_id)
 
         if min_price is not None:
@@ -429,17 +435,17 @@ class WishlistItem(db.Model):
         Find items with multiple filters applied
         This is the most flexible method that combines all possible filters
         """
-        wishlist_id = filters.get('wishlist_id')
+        wishlist_id = filters.get("wishlist_id")
         if not wishlist_id:
             raise ValueError("wishlist_id is required")
 
         logger.info("Processing lookup with filters in wishlist %s...", wishlist_id)
         query = cls.query.filter(cls.wishlist_id == wishlist_id)
 
-        product_name = filters.get('product_name')
-        category = filters.get('category')
-        min_price = filters.get('min_price')
-        max_price = filters.get('max_price')
+        product_name = filters.get("product_name")
+        category = filters.get("category")
+        min_price = filters.get("min_price")
+        max_price = filters.get("max_price")
 
         if product_name:
             query = query.filter(cls.product_name == product_name)

@@ -62,6 +62,13 @@ def index():
 def list_wishlists():
     """
     List all Wishlists with optional filters
+
+    Query Parameters:
+    - customer_id: Filter wishlists by customer ID
+    - name: Case-insensitive partial match on wishlist name
+
+    Returns:
+    List of serialized wishlist objects
     """
     app.logger.info("List all wishlists")
 
@@ -471,6 +478,7 @@ def check_content_type(content_type) -> None:
         f"Content-Type must be {content_type}",
     )
 
+
 ######################################################################
 #  A C T I O N   F U N C T I O N S
 ######################################################################
@@ -530,11 +538,16 @@ def publish_wishlist(wishlist_id):
         )
     wishlist.is_public = True
     wishlist.update()
-    return jsonify({
-        "message": f"Wishlist {wishlist_id} published.",
-        "wishlist_id": wishlist.id,
-        "is_public": wishlist.is_public
-    }), status.HTTP_200_OK
+    return (
+        jsonify(
+            {
+                "message": f"Wishlist {wishlist_id} published.",
+                "wishlist_id": wishlist.id,
+                "is_public": wishlist.is_public,
+            }
+        ),
+        status.HTTP_200_OK,
+    )
 
 
 ######################################################################
@@ -554,11 +567,16 @@ def unpublish_wishlist(wishlist_id):
         )
     wishlist.is_public = False
     wishlist.update()
-    return jsonify({
-        "message": f"Wishlist {wishlist_id} unpublished.",
-        "wishlist_id": wishlist.id,
-        "is_public": wishlist.is_public
-    }), status.HTTP_200_OK
+    return (
+        jsonify(
+            {
+                "message": f"Wishlist {wishlist_id} unpublished.",
+                "wishlist_id": wishlist.id,
+                "is_public": wishlist.is_public,
+            }
+        ),
+        status.HTTP_200_OK,
+    )
 
 
 ######################################################################
@@ -578,12 +596,17 @@ def like_wishlist_item(wishlist_id, item_id):
         )
     item.likes = (item.likes or 0) + 1
     item.update()
-    return jsonify({
-        "message": f"Item {item_id} in wishlist {wishlist_id} liked.",
-        "item_id": item.id,
-        "wishlist_id": item.wishlist_id,
-        "likes": item.likes
-    }), status.HTTP_200_OK
+    return (
+        jsonify(
+            {
+                "message": f"Item {item_id} in wishlist {wishlist_id} liked.",
+                "item_id": item.id,
+                "wishlist_id": item.wishlist_id,
+                "likes": item.likes,
+            }
+        ),
+        status.HTTP_200_OK,
+    )
 
 
 ######################################################################
@@ -622,13 +645,17 @@ def copy_wishlist(wishlist_id):
             likes=item.likes,
         )
         new_item.create()
-    app.logger.info("Wishlist %s copied to new wishlist %s", wishlist_id, new_wishlist.id)
+    app.logger.info(
+        "Wishlist %s copied to new wishlist %s", wishlist_id, new_wishlist.id
+    )
     return (
-        jsonify({
-            "message": f"Wishlist {wishlist_id} copied to new wishlist {new_wishlist.id}.",
-            "original_wishlist_id": wishlist_id,
-            "new_wishlist_id": new_wishlist.id,
-            "wishlist": new_wishlist.serialize(),
-        }),
+        jsonify(
+            {
+                "message": f"Wishlist {wishlist_id} copied to new wishlist {new_wishlist.id}.",
+                "original_wishlist_id": wishlist_id,
+                "new_wishlist_id": new_wishlist.id,
+                "wishlist": new_wishlist.serialize(),
+            }
+        ),
         status.HTTP_201_CREATED,
     )
