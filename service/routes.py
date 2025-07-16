@@ -32,70 +32,8 @@ from service.common import status  # HTTP Status Codes
 ######################################################################
 @app.route("/")
 def index():
-    """Root URL response"""
-    return (
-        jsonify(
-            name="Wishlist REST API Service",
-            version="1.0",
-            description="RESTful microservice for managing customer wishlists",
-            endpoints={
-                # Wishlist CRUD Operations
-                "list_wishlists": "GET /wishlists",
-                "get_wishlist": "GET /wishlists/{id}",
-                "create_wishlist": "POST /wishlists",
-                "update_wishlist": "PUT /wishlists/{id}",
-                "delete_wishlist": "DELETE /wishlists/{id}",
-
-                # Wishlist Item CRUD Operations
-                "list_wishlist_items": "GET /wishlists/{id}/items",
-                "get_wishlist_item": "GET /wishlists/{id}/items/{item_id}",
-                "add_wishlist_item": "POST /wishlists/{id}/items",
-                "update_wishlist_item": "PUT /wishlists/{id}/items/{item_id}",
-                "delete_wishlist_item": "DELETE /wishlists/{id}/items/{item_id}",
-
-                # Action Endpoints
-                "clear_wishlist": "POST /wishlists/{id}/clear",
-                "publish_wishlist": "POST /wishlists/{id}/publish",
-                "unpublish_wishlist": "POST /wishlists/{id}/unpublish",
-                "copy_wishlist": "POST /wishlists/{id}/copy",
-                "like_wishlist_item": "POST /wishlists/{id}/items/{item_id}/like",
-
-                # Health Check
-                "health_check": "GET /health"
-            },
-            query_parameters={
-                "wishlist_queries": {
-                    "customer_id": "Filter wishlists by customer ID",
-                    "name": "Filter wishlists by name (case-insensitive partial match)",
-                    "is_public": "Filter wishlists by visibility (true/false)"
-                },
-                "item_queries": {
-                    "product_name": "Filter items by exact product name",
-                    "category": "Filter items by category",
-                    "min_price": "Filter items with minimum price",
-                    "max_price": "Filter items with maximum price"
-                }
-            },
-            examples={
-                "wishlist_queries": [
-                    "GET /wishlists?customer_id=customer123",
-                    "GET /wishlists?name=holiday",
-                    "GET /wishlists?is_public=true"
-                ],
-                "item_queries": [
-                    "GET /wishlists/{id}/items?category=electronics",
-                    "GET /wishlists/{id}/items?min_price=100&max_price=500",
-                    "GET /wishlists/{id}/items?category=electronics&min_price=100"
-                ],
-                "actions": [
-                    "POST /wishlists/{id}/clear - Remove all items from wishlist",
-                    "POST /wishlists/{id}/publish - Make wishlist public",
-                    "POST /wishlists/{id}/copy - Create a copy of the wishlist"
-                ]
-            }
-        ),
-        status.HTTP_200_OK,
-    )
+    """Root URL response - serve the admin UI"""
+    return app.send_static_file("index.html")
 
 
 ######################################################################
@@ -279,7 +217,9 @@ def _parse_price_parameters():
     return min_price, max_price
 
 
-def _build_filter_error_message(product_name, category, min_price, max_price, wishlist_id):
+def _build_filter_error_message(
+    product_name, category, min_price, max_price, wishlist_id
+):
     """Build error message for when no items match the filters"""
     filter_desc = []
     if product_name:
@@ -358,12 +298,18 @@ def list_wishlist_items(wishlist_id):
     min_price, max_price = _parse_price_parameters()
 
     # Check if any filtering parameters are provided
-    has_filters = any([product_name, category, min_price is not None, max_price is not None])
+    has_filters = any(
+        [product_name, category, min_price is not None, max_price is not None]
+    )
 
     if has_filters:
-        results = _get_filtered_items(wishlist_id, product_name, category, min_price, max_price)
+        results = _get_filtered_items(
+            wishlist_id, product_name, category, min_price, max_price
+        )
     else:
-        results = [wishlist_item.serialize() for wishlist_item in wishlist.wishlist_items]
+        results = [
+            wishlist_item.serialize() for wishlist_item in wishlist.wishlist_items
+        ]
 
     # Return the list of items in the wishlist
     return jsonify(results), status.HTTP_200_OK
