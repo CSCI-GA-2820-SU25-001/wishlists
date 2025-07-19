@@ -22,7 +22,7 @@ spec:
       restartPolicy: Always
       containers:
       - name: wishlist
-        image: cluster-registry:5000/nyu-devops/wishlist:1.0.0
+        image: cluster-registry:5000/wishlist:1.0
         # image: wishlist
         imagePullPolicy: IfNotPresent
         ports:
