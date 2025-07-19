@@ -31,6 +31,7 @@ make push
 # 5. Deploy into Kubernetes
 log INFO "Deploying application..."
 make deploy
+sleep 5
 
 # 6. Show cluster resources
 log INFO "Current cluster resources:"
