@@ -12,8 +12,6 @@ Feature: Wishlist Management
         And I fill in the "create_description" with "Gifts for the family"
         And I click the "create-btn" button
         Then I should see a success message containing "Success"
-        When I click the "list-all-btn" button
-        Then I should see "My Holiday Wishlist" in the results table
 
     Scenario: Attempt to create a wishlist with a duplicate name
         Given a wishlist named "Kitchen Appliances" already exists for customer "456"

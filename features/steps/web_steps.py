@@ -27,7 +27,7 @@ For information on Waiting until elements are present in the HTML see:
 import re
 import logging
 from typing import Any
-from behave import when, then  # pylint: disable=no-name-in-module
+from behave import given, when, then  # pylint: disable=no-name-in-module
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select, WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -47,6 +47,11 @@ def save_screenshot(context: Any, filename: str) -> None:
     filename = re.sub(r"\s+", "-", filename)
     context.driver.save_screenshot(f"./captures/{filename}.png")
     
+@given('I am on the "Home Page"')
+def step_impl(context):
+    """ Navigate to the Home Page """
+    context.driver.get(context.base_url)
+
 @when('I visit the "Home Page"')
 def step_impl(context):
     """ Make a call to the base URL """
@@ -77,11 +82,15 @@ def step_impl(context, button_id):
 @then('I should see a success message containing "{message}"')
 def step_impl(context, message):
     """ Checks for a success message in the flash notification """
-    flash_div = WebDriverWait(context.driver, WAIT_SECONDS).until(
-        EC.visibility_of_element_located((By.ID, 'flash_message'))
-    )
-    # Check that the div has the 'flash-success' class
-    assert "flash-success" in flash_div.get_attribute("class")
+    # Wait for flash message to appear with success class
+    def flash_success_visible(driver):
+        flash_div = driver.find_element(By.ID, 'flash_message')
+        if flash_div and "flash-success" in flash_div.get_attribute("class"):
+            return flash_div
+        return False
+    
+    flash_div = WebDriverWait(context.driver, WAIT_SECONDS).until(flash_success_visible)
+    
     # Check that the text contains the expected message
     flash_text = flash_div.find_element(By.ID, 'flash_text')
     assert message in flash_text.text
