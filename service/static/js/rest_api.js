@@ -29,7 +29,10 @@ $(function () {
     function clear_form(tabId) {
         $(`#${tabId} input[type="text"]`).val('');
         $(`#${tabId} textarea`).val('');
+        $(`#${tabId} input[type="checkbox"]`).prop('checked', false);
         $(`#${tabId} select`).prop('selectedIndex', 0);
+        // Remove any error styling
+        $(`#${tabId} .has-error`).removeClass('has-error');
     }
 
     // Validate required fields
@@ -37,14 +40,17 @@ $(function () {
         let isValid = true;
         let missingFields = [];
 
+        // Clear any existing error styling first
+        fields.forEach(field => {
+            $(`#${field.id}`).removeClass('has-error');
+        });
+
         fields.forEach(field => {
             const value = $(`#${field.id}`).val().trim();
             if (!value) {
                 isValid = false;
                 missingFields.push(field.name);
                 $(`#${field.id}`).addClass('has-error');
-            } else {
-                $(`#${field.id}`).removeClass('has-error');
             }
         });
 
@@ -53,6 +59,66 @@ $(function () {
         }
 
         return isValid;
+    }
+
+    // Validate wishlist name format
+    function validate_wishlist_name(name) {
+        // Clear any existing error styling
+        $("#create_name").removeClass('has-error');
+        
+        // Basic validation: minimum length
+        if (name.length < 2) {
+            flash_message("Wishlist name must be at least 2 characters long.", 'error');
+            $("#create_name").addClass('has-error');
+            return false;
+        }
+        
+        // Maximum length validation
+        if (name.length > 100) {
+            flash_message("Wishlist name must be less than 100 characters.", 'error');
+            $("#create_name").addClass('has-error');
+            return false;
+        }
+
+        // Check for invalid characters
+        const invalidChars = /[<>\"'&]/;
+        if (invalidChars.test(name)) {
+            flash_message("Wishlist name contains invalid characters. Please avoid: < > \" ' &", 'error');
+            $("#create_name").addClass('has-error');
+            return false;
+        }
+
+        return true;
+    }
+
+    // Check for duplicate wishlist names
+    function check_duplicate_wishlist(customerId, wishlistName, callback) {
+        const ajax_check = $.ajax({
+            type: "GET",
+            url: `/wishlists?customer_id=${encodeURIComponent(customerId)}`,
+            contentType: "application/json",
+        });
+
+        ajax_check.done(function(existingWishlists) {
+            // Check if any existing wishlists have the same name (case-insensitive)
+            const duplicateExists = existingWishlists.some(wishlist => 
+                wishlist.name.toLowerCase() === wishlistName.toLowerCase()
+            );
+
+            if (duplicateExists) {
+                flash_message(`Error: A wishlist named '${wishlistName}' already exists for this customer. Please choose a different name.`, 'error');
+                $("#create_name").addClass('has-error');
+                callback(false);
+            } else {
+                callback(true);
+            }
+        });
+
+        ajax_check.fail(function(res) {
+            // If the check fails, log it but still proceed
+            console.warn("Could not check for duplicate wishlist names:", res);
+            callback(true); // Allow creation to proceed
+        });
     }
 
     // Format date for display
@@ -69,6 +135,11 @@ $(function () {
     // ****************************************
 
     $("#create-btn").click(function () {
+        // Disable the button and show loading state
+        const createBtn = $(this);
+        const originalText = createBtn.html();
+        createBtn.prop('disabled', true).html('<span class="loading-spinner"></span> Creating...');
+        
         // Validate required fields
         const requiredFields = [
             { id: 'create_name', name: 'Wishlist Name' },
@@ -76,9 +147,33 @@ $(function () {
         ];
 
         if (!validate_required_fields(requiredFields)) {
+            createBtn.prop('disabled', false).html(originalText);
             return;
         }
 
+        const wishlistName = $("#create_name").val().trim();
+        const customerId = $("#create_customer_id").val().trim();
+
+        // Validate wishlist name format
+        if (!validate_wishlist_name(wishlistName)) {
+            createBtn.prop('disabled', false).html(originalText);
+            return;
+        }
+
+        // Check for duplicate wishlist names
+        check_duplicate_wishlist(customerId, wishlistName, function(isUnique) {
+            if (!isUnique) {
+                createBtn.prop('disabled', false).html(originalText);
+                return;
+            }
+
+            // Proceed with creation
+            createWishlist(createBtn, wishlistName, originalText);
+        });
+    });
+
+    // Separated creation logic for better organization
+    function createWishlist(createBtn, wishlistName, originalText) {
         // Gather form data
         const data = {
             name: $("#create_name").val().trim(),
@@ -99,23 +194,50 @@ $(function () {
         });
 
         ajax.done(function(res) {
-            flash_message("Success: Wishlist created successfully!", 'success');
-            // Optionally populate form with created wishlist data
-            // This would be useful for showing the assigned ID
+            // Enhanced success message with more details
+            flash_message(`Success: Wishlist '${res.name}' created successfully with ID ${res.id}!`, 'success');
+            
+            // Clear the form after successful creation
+            clear_form('create');
+            
+            // Auto-refresh the view tab if it contains results
+            if ($("#results-body tr").length > 1) { // More than just the "no results" row
+                setTimeout(() => {
+                    $("#list-all-btn").trigger('click');
+                }, 500); // Small delay to let user see the success message
+            }
+            
+            // Re-enable the button
+            createBtn.prop('disabled', false).html(originalText);
         });
 
         ajax.fail(function(res) {
             let errorMessage = "Error creating wishlist";
+            
+            // Enhanced error handling
             if (res.responseJSON && res.responseJSON.message) {
                 errorMessage = res.responseJSON.message;
+            } else if (res.status === 400) {
+                errorMessage = "Invalid input data. Please check your entries and try again.";
+            } else if (res.status === 409) {
+                errorMessage = "A wishlist with this name already exists for this customer.";
+            } else if (res.status === 500) {
+                errorMessage = "Server error occurred. Please try again later.";
+            } else if (res.status === 0) {
+                errorMessage = "Network error. Please check your connection and try again.";
             }
+            
             flash_message(errorMessage, 'error');
+            
+            // Re-enable the button
+            createBtn.prop('disabled', false).html(originalText);
         });
-    });
+    }
 
     $("#create-clear-btn").click(function () {
         clear_form('create');
         $("#flash_message").fadeOut();
+        flash_message("Form cleared successfully. Ready to create a new wishlist.", 'info');
     });
 
     // ****************************************
@@ -308,4 +430,32 @@ $(function () {
 
     // Show welcome message
     flash_message("Welcome to the Wishlist Admin Interface! Select a tab to get started.", 'info');
+
+    // ****************************************
+    //  R E A L - T I M E   V A L I D A T I O N
+    // ****************************************
+
+    // Real-time validation for wishlist name
+    $("#create_name").on('input blur', function() {
+        const name = $(this).val().trim();
+        if (name.length > 0) {
+            validate_wishlist_name(name);
+        } else {
+            $(this).removeClass('has-error');
+        }
+    });
+
+    // Real-time validation for customer ID
+    $("#create_customer_id").on('blur', function() {
+        const customerId = $(this).val().trim();
+        if (customerId.length > 0) {
+            $(this).removeClass('has-error');
+        }
+    });
+
+    // Clear error states when user starts typing
+    $("#create_name, #create_customer_id").on('input', function() {
+        $(this).removeClass('has-error');
+    });
+
 });
