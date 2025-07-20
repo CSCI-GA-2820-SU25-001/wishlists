@@ -182,9 +182,9 @@ def delete_wishlist(wishlist_id):
 # HEALTH CHECK
 ######################################################################
 @app.route("/health")
-def healthcheck():
-    """Returns service health status"""
-    return jsonify({"status": "OK"}), 200
+def health():
+    """Health Check endpoint for Kubernetes probes"""
+    return jsonify({"status": "OK"}), status.HTTP_200_OK
 
 
 # ---------------------------------------------------------------------
