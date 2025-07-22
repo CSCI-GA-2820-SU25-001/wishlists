@@ -1,27 +1,76 @@
 Feature: Wishlist Management
     As an eCommerce manager
-    I need to create a new wishlist or a new item using a web user interface
-    So that I can efficiently manage customer wishlists or items without requiring direct access to the backend system.
+    I need to create and update wishlists using a web user interface
+    So that I can efficiently manage customer wishlists without requiring direct access to the backend system.
 
     Background:
-        Given I am on the "Home Page"
+        Given the following wishlists
+            | name              | customer_id | description        | is_public |
+            | Holiday Shopping  | 123         | Christmas gifts    | True      |
+            | Kitchen Appliances| 456         | New kitchen items  | False     |
+        When I visit the "Home Page"
 
-    Scenario: Successfully create a new wishlist
-        When I fill in the "create_name" with "My Holiday Wishlist"
-        And I fill in the "create_customer_id" with "123"
-        And I fill in the "create_description" with "Gifts for the family"
-        And I click the "create-btn" button
-        Then I should see a success message containing "Success"
+    Scenario: Create a new wishlist
+        When I set the "Name" to "Birthday List"
+        And I set the "Customer Id" to "789"
+        And I set the "Description" to "Birthday gifts for family"
+        And I select "Public" in the "Visibility" dropdown
+        And I press the "Create" button
+        Then I should see the message "Success"
 
-    Scenario: Attempt to create a wishlist with a duplicate name
-        Given a wishlist named "Kitchen Appliances" already exists for customer "456"
-        When I fill in the "create_name" with "Kitchen Appliances"
-        And I fill in the "create_customer_id" with "456"
-        And I click the "create-btn" button
-        Then I should see an error message containing "already exists"
+    Scenario: Create a wishlist with minimal information
+        When I set the "Name" to "Simple List"
+        And I set the "Customer Id" to "999"
+        And I press the "Create" button
+        Then I should see the message "Success"
 
-    Scenario: Attempt to create a wishlist with missing required data
-        When I fill in the "create_name" with "My New Wishlist"
-        And I leave the "create_customer_id" field empty
-        And I click the "create-btn" button
-        Then I should see an error message containing "Please fill in the following required fields"
+    Scenario: Attempt to create a wishlist with duplicate name
+        When I set the "Name" to "Kitchen Appliances"
+        And I set the "Customer Id" to "456"
+        And I press the "Create" button
+        Then I should see the message "already exists"
+
+    Scenario: Attempt to create a wishlist with missing required fields
+        When I set the "Name" to ""
+        And I set the "Customer Id" to "999"
+        And I press the "Create" button
+        Then I should see the message "Please fill in the following required fields"
+
+    Scenario: View and search wishlists
+        When I click the "View" tab
+        And I press the "List All" button
+        Then I should see the message "Success"
+        And I should see "Holiday Shopping" in the results
+        And I should see "Kitchen Appliances" in the results
+
+    Scenario: Search for wishlists by customer
+        When I click the "View" tab
+        And I set the "Customer Id" to "123"
+        And I press the "Search" button
+        Then I should see the message "Success"
+        And I should see "Holiday Shopping" in the results
+
+    Scenario: Search for wishlists by name
+        When I click the "View" tab
+        And I set the "Name" to "Holiday Shopping"
+        And I press the "Search" button
+        Then I should see the message "Success"
+        And I should see "Holiday Shopping" in the results
+
+    Scenario: Search a specific wishlist by Customer ID and Wishlist Name
+        When I click the "View" tab
+        And I set the "Customer Id" to "123"
+        And I set the "Name" to "Holiday Shopping"
+        And I press the "Search" button
+        Then I should see the message "Success"
+        And I should see "Holiday Shopping" in the results
+        And I should not see "Kitchen Appliances" in the results
+
+    Scenario: Clear search results
+        When I click the "View" tab
+        And I set the "Name" to "Holiday Shopping"
+        And I press the "Search" button
+        Then I should see the message "Success"
+        When I press the "Clear" button
+        Then the search fields should be empty
+        And the results table should show "No results to display"

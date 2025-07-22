@@ -305,11 +305,79 @@
                     <p>Modify existing wishlist details</p>
                 </div>
                 
+                <!-- Search and Load Section -->
                 <div class="form-section">
-                    <div class="alert alert-info">
-                        <i class="glyphicon glyphicon-info-sign"></i>
-                        <strong>Coming Soon:</strong> Update functionality will be implemented in future user stories.
-                    </div>
+                    <h4>Find Wishlist to Update</h4>
+                    <form class="form-horizontal">
+                        <div class="form-group">
+                            <label class="control-label col-sm-2" for="update_search_customer_id">Customer ID</label>
+                            <div class="col-sm-4">
+                                <input type="text" class="form-control" id="update_search_customer_id" placeholder="Enter customer ID">
+                            </div>
+                            <label class="control-label col-sm-2" for="update_search_name">Wishlist Name</label>
+                            <div class="col-sm-4">
+                                <input type="text" class="form-control" id="update_search_name" placeholder="Enter wishlist name">
+                            </div>
+                        </div>
+                        
+                        <div class="action-buttons">
+                            <button type="button" class="btn btn-primary" id="load-btn">
+                                <i class="glyphicon glyphicon-download"></i> Load Wishlist
+                            </button>
+                            <button type="button" class="btn btn-default" id="update-clear-search-btn">
+                                <i class="glyphicon glyphicon-refresh"></i> Clear Search
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Update Form Section (initially hidden) -->
+                <div class="form-section" id="update-form-section" style="display: none;">
+                    <h4>Update Wishlist Details</h4>
+                    <form id="update-form" class="form-horizontal">
+                        <input type="hidden" id="update_id">
+                        
+                        <div class="form-group">
+                            <label class="control-label col-sm-2" for="update_name">Wishlist Name *</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="update_name" placeholder="Enter wishlist name" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="control-label col-sm-2" for="update_customer_id">Customer ID *</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="update_customer_id" placeholder="Customer ID" readonly>
+                                <p class="help-block">Customer ID cannot be changed to maintain data integrity</p>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="control-label col-sm-2" for="update_description">Description</label>
+                            <div class="col-sm-10">
+                                <textarea class="form-control" id="update_description" rows="3" placeholder="Enter description (optional)"></textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="control-label col-sm-2" for="update_is_public">Visibility</label>
+                            <div class="col-sm-10">
+                                <select class="form-control" id="update_is_public">
+                                    <option value="false">Private</option>
+                                    <option value="true">Public</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="action-buttons">
+                            <button type="button" class="btn btn-success btn-lg" id="save-changes-btn">
+                                <i class="glyphicon glyphicon-floppy-disk"></i> Save Changes
+                            </button>
+                            <button type="button" class="btn btn-default" id="cancel-update-btn">
+                                <i class="glyphicon glyphicon-remove"></i> Cancel
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
 
