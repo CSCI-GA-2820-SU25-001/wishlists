@@ -47,6 +47,7 @@ def list_wishlists():
     Query Parameters:
     - customer_id: Filter wishlists by customer ID
     - name: Case-insensitive partial match on wishlist name
+    - is_public: Filter by visibility (true/false)
 
     Returns:
     List of serialized wishlist objects
@@ -57,29 +58,27 @@ def list_wishlists():
     name = request.args.get("name")
     is_public = request.args.get("is_public")
 
-    wishlists = []  # Initialize to satisfy pylint
+    query = Wishlist.query
 
-    if customer_id:
-        app.logger.info("Find by customer_id: %s", customer_id)
-        wishlists = Wishlist.find_for_user(customer_id)
-    elif name:
-        app.logger.info("Find by name: %s", name)
-        wishlists = Wishlist.find_by_name(name)
-    elif is_public is not None:
+    if customer_id is not None:
+        query = query.filter_by(customer_id=customer_id)
+
+    if name:
+        query = query.filter(Wishlist.name.ilike(f"%{name}%"))
+
+    if is_public is not None:
         if is_public.lower() == "true":
-            wishlists = Wishlist.find_by_visibility(True)
+            query = query.filter_by(is_public=True)
         elif is_public.lower() == "false":
-            wishlists = Wishlist.find_by_visibility(False)
+            query = query.filter_by(is_public=False)
         else:
-            abort(status.HTTP_400_BAD_REQUEST, "is_public must be 'true' or 'false'")
-    else:
-        wishlists = Wishlist.all()
+            abort(
+                status.HTTP_400_BAD_REQUEST,
+                "is_public must be 'true' or 'false'"
+            )
 
-    results = []
-
-    for wishlist in wishlists:
-        data = wishlist.serialize()
-        results.append(data)
+    wishlists = query.all()            # ONE database hit, even with 3 filters
+    results   = [w.serialize() for w in wishlists]
 
     return jsonify(results), status.HTTP_200_OK
 
