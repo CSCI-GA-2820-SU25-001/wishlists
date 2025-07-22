@@ -72,15 +72,13 @@ def list_wishlists():
         elif is_public.lower() == "false":
             query = query.filter_by(is_public=False)
         else:
-            abort(
-                status.HTTP_400_BAD_REQUEST,
-                "is_public must be 'true' or 'false'"
-            )
+            abort(status.HTTP_400_BAD_REQUEST, "is_public must be 'true' or 'false'")
 
-    wishlists = query.all()            # ONE database hit, even with 3 filters
-    results   = [w.serialize() for w in wishlists]
-
-    return jsonify(results), status.HTTP_200_OK
+    wishlists = query.all()  # ONE database hit, even with 3 filters
+    return (
+        jsonify([w.serialize() for w in wishlists]),
+        status.HTTP_200_OK,
+    )
 
 
 ######################################################################
