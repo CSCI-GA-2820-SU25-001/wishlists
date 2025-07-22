@@ -64,6 +64,7 @@ Feature: Wishlist Management
         And I press the "Search" button
         Then I should see the message "Success"
         And I should see "Holiday Shopping" in the results
+        And I should not see "Kitchen Appliances" in the results
 
     Scenario: Clear search results
         When I click the "View" tab
