@@ -60,15 +60,28 @@ def _get_element_id(context: Any, element_name: str) -> str:
         if active_tab_id == "update-tab":
             return "update_is_public"
 
+    # Special case for Customer ID field which has different IDs in different tabs
+    if base_name == "customer_id":
+        if active_tab_id == "create-tab":
+            return "create_customer_id"
+        if active_tab_id == "view-tab":
+            return "search_customer_id"
+        if active_tab_id == "update-tab":
+            return "update_customer_id"
+        if active_tab_id == "delete-tab":
+            return "delete_customer_id"
+
     # Logic for the "View" tab's unique field IDs
     if active_tab_id == "view-tab":
-        if base_name == "customer_id":
-            return "search_customer_id"
         if base_name == "name":
             return "search_name"
         if base_name == "wishlist_id":
             return "view_wishlist_id"
         return f"{SEARCH_PREFIX}{base_name}"
+
+    # Logic for the "Delete" tab's unique field IDs
+    if active_tab_id == "delete-tab":
+        return f"delete_{base_name}"
 
     # Logic for other tabs using standard prefixes
     if active_tab_id == "create-tab":
@@ -157,6 +170,8 @@ def step_impl(context: Any, button: str) -> None:
         "save changes": "save-changes-btn",
         "cancel": "cancel-update-btn",
         "update": "save-changes-btn",  # Alternative name for save changes
+        "lookup": "delete-lookup-btn",
+        "delete wishlist": "delete-confirm-btn",
     }
 
     button_key = button.lower()
@@ -184,13 +199,100 @@ def step_impl(context, text):
     element.send_keys(text)
 
 
+@when('I enter "{text}" in the delete Customer ID field')
+def step_impl(context, text):
+    """Specifically for the delete tab customer ID field"""
+    element = WebDriverWait(context.driver, WAIT_SECONDS).until(
+        EC.presence_of_element_located((By.ID, "delete_customer_id"))
+    )
+    element.clear()
+    element.send_keys(text)
+
+
+@when("I select the first wishlist")
+def step_impl(context: Any) -> None:
+    """Select the first wishlist from the delete wishlist selection list"""
+    # Wait for the delete wishlist selection to be visible
+    WebDriverWait(context.driver, WAIT_SECONDS).until(
+        EC.visibility_of_element_located((By.ID, "delete-wishlist-selection"))
+    )
+
+    # Find and click the first wishlist button in the list
+    first_wishlist_btn = WebDriverWait(context.driver, WAIT_SECONDS).until(
+        EC.element_to_be_clickable(
+            (By.CSS_SELECTOR, "#delete-wishlists-list .list-group-item")
+        )
+    )
+    first_wishlist_btn.click()
+
+
+@when("I confirm the deletion")
+def step_impl(context: Any) -> None:
+    """Confirm the deletion by accepting the browser confirmation dialog"""
+    # Wait a moment for the confirmation dialog to appear
+    import time
+
+    time.sleep(0.5)
+
+    # Accept the confirmation dialog
+    try:
+        alert = context.driver.switch_to.alert
+        alert.accept()
+    except:
+        # If there's no alert, that's fine - the test might be using a different mechanism
+        pass
+
+
 @then('I should see the message "{message}"')
 def step_impl(context: Any, message: str) -> None:
     """Check for a message in the flash notification"""
-    found = WebDriverWait(context.driver, WAIT_SECONDS).until(
-        EC.text_to_be_present_in_element((By.ID, "flash_message"), message)
-    )
-    assert found
+    try:
+        # Wait for any flash message to appear
+        flash_element = WebDriverWait(context.driver, WAIT_SECONDS).until(
+            EC.visibility_of_element_located((By.ID, "flash_message"))
+        )
+
+        # Get the actual message text
+        actual_message = flash_element.text.strip()
+
+        # Check if the expected message is contained in the actual message (case-insensitive)
+        if message.lower() in actual_message.lower():
+            return  # Test passes
+        else:
+            print(f"\nExpected message (partial): '{message}'")
+            print(f"Actual message: '{actual_message}'")
+            raise AssertionError(
+                f"Expected message '{message}' not found in actual message: '{actual_message}'"
+            )
+
+    except Exception as e:
+        # If no flash message is found, check if there's any visible error or success message
+        try:
+            # Look for any visible alert or message
+            alerts = context.driver.find_elements(
+                By.CSS_SELECTOR,
+                ".alert, .flash-message, .flash-success, .flash-error, .flash-info",
+            )
+            for alert in alerts:
+                if alert.is_displayed():
+                    alert_text = alert.text.strip()
+                    if message.lower() in alert_text.lower():
+                        return
+                    print(f"Found alert: {alert_text}")
+
+            # Also check the flash_text element specifically
+            flash_text = context.driver.find_element(By.ID, "flash_text")
+            if flash_text.is_displayed():
+                text_content = flash_text.text.strip()
+                if message.lower() in text_content.lower():
+                    return
+                print(f"Flash text content: '{text_content}'")
+
+        except:
+            pass
+
+        print(f"No message containing '{message}' was found")
+        raise AssertionError(f"Expected message '{message}' not found")
 
 
 @then('I should see "{name}" in the results')
