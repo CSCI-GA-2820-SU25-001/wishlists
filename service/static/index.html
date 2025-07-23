@@ -403,12 +403,26 @@
                     <p>Perform bulk operations and special actions</p>
                 </div>
                 
-                <div class="form-section">
-                    <div class="alert alert-info">
-                        <i class="glyphicon glyphicon-info-sign"></i>
-                        <strong>Coming Soon:</strong> Action functionality will be implemented in future user stories.
+                <form class="form-inline" id="actions-form">
+                    <div class="form-group">
+                        <label for="action_wishlist_id">Wishlist ID:</label>
+                        <input type="text" class="form-control" id="action_wishlist_id" placeholder="Enter wishlist ID" required>
                     </div>
-                </div>
+                    <button type="button" class="btn btn-success" id="make-public-btn">
+                        <i class="glyphicon glyphicon-globe"></i> Make Public
+                    </button>
+                    <button type="button" class="btn btn-warning" id="make-private-btn">
+                        <i class="glyphicon glyphicon-lock"></i> Make Private
+                    </button>
+                    <button type="button" class="btn btn-info" id="query-status-btn">
+                        <i class="glyphicon glyphicon-question-sign"></i> Query Status
+                    </button>
+                </form>
+                <div id="action-status-result" style="margin-top:15px;"></div>
+            </div>  
+
+
+
             </div>
         </div>
 
