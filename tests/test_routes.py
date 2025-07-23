@@ -1072,7 +1072,8 @@ class TestSadPaths(TestCase):
         # Create a wishlist and add an item
         wishlist = WishlistFactory()
         wishlist.create()
-        item = WishlistItemFactory(wishlist=wishlist, likes=0)
+        item = WishlistItemFactory(wishlist=wishlist)
+        item.likes = 0
         item.create()
 
         # Like the item
@@ -1096,8 +1097,10 @@ class TestSadPaths(TestCase):
         wishlist = WishlistFactory()
         wishlist.create()
         item1 = WishlistItemFactory(wishlist=wishlist)
+        item1.likes = 0
         item1.create()
         item2 = WishlistItemFactory(wishlist=wishlist)
+        item2.likes = 0
         item2.create()
 
         # Copy the wishlist

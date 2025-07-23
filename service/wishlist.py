@@ -276,6 +276,11 @@ class WishlistItem(db.Model):
     )
     quantity = db.Column(db.Integer, nullable=False, default=1)
     likes = db.Column(db.Integer, nullable=False, default=0)
+    # likes = db.Column(db.Integer, nullable=False, default=0)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.likes = 0
 
     def __repr__(self):
         return (
@@ -304,7 +309,7 @@ class WishlistItem(db.Model):
             "category": self.category,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": (self.updated_at.isoformat() if self.updated_at else None),
-            "likes": self.likes,
+            "likes": getattr(self, "likes", None),
         }
 
     def deserialize(self, data):
