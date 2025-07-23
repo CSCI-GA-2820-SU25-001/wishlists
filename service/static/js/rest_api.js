@@ -740,6 +740,173 @@ $(function () {
     }
 
     // ****************************************
+    //  D E L E T E   F U N C T I O N A L I T Y
+    // ****************************************
+    let selectedWishlistForDelete = null;
+
+    $("#delete-lookup-btn").click(function () {
+        const customer_id = $("#delete_customer_id").val().trim();
+
+        if (!customer_id) {
+            flash_message("Please enter a Customer ID", 'error');
+            return;
+        }
+
+        $("#flash_message").fadeOut();
+
+        const ajax = $.ajax({
+            type: "GET",
+            url: `/wishlists?customer_id=${encodeURIComponent(customer_id)}`,
+            contentType: "application/json"
+        });
+
+        ajax.done(function (res) {
+            if (res.length === 0) {
+                $("#delete-wishlist-selection").fadeOut();
+                $("#delete-wishlist-details").fadeOut();
+                flash_message(`No wishlists found for customer ID '${customer_id}'`, 'error');
+                return;
+            }
+
+            // Show wishlist selection
+            let wishlistsHtml = '<h5>Select a wishlist to delete:</h5>';
+            wishlistsHtml += '<div class="list-group">';
+            
+            res.forEach(function(wishlist) {
+                wishlistsHtml += `
+                    <button type="button" class="list-group-item list-group-item-action" 
+                            onclick="select_wishlist_for_delete(${wishlist.id}, '${wishlist.name}')">
+                        <strong>${wishlist.name}</strong><br>
+                        <small>ID: ${wishlist.id} | ${wishlist.is_public ? 'Public' : 'Private'} | ${wishlist.description || 'No description'}</small>
+                    </button>
+                `;
+            });
+            
+            wishlistsHtml += '</div>';
+            $("#delete-wishlists-list").html(wishlistsHtml);
+            $("#delete-wishlist-selection").fadeIn();
+            $("#delete-wishlist-details").fadeOut();
+            
+            flash_message("Success: Found wishlists for customer", 'success');
+        });
+
+        ajax.fail(function (res) {
+            $("#delete-wishlist-selection").fadeOut();
+            $("#delete-wishlist-details").fadeOut();
+            flash_message(`Customer with ID '${customer_id}' could not be found`, 'error');
+        });
+    });
+
+    // Make this function globally accessible
+    window.select_wishlist_for_delete = function(wishlist_id, wishlist_name) {
+        selectedWishlistForDelete = wishlist_id;
+        
+        const ajax = $.ajax({
+            type: "GET",
+            url: `/wishlists/${wishlist_id}`,
+            contentType: "application/json"
+        });
+
+        ajax.done(function (res) {
+            $("#delete-name").text(res.name);
+            $("#delete-customer-id").text(res.customer_id);
+            $("#delete-visibility").text(res.is_public ? 'Public' : 'Private');
+            $("#delete-created").text(format_date(res.created_at));
+            $("#delete-description").text(res.description || 'No description');
+            
+            load_wishlist_items_for_delete(wishlist_id);
+            $("#delete-wishlist-details").fadeIn();
+            flash_message("Success: Wishlist selected for deletion", 'success');
+        });
+
+        ajax.fail(function (res) {
+            flash_message("Error loading wishlist details", 'error');
+        });
+    };
+
+    function load_wishlist_items_for_delete(wishlist_id) {
+        const ajax = $.ajax({
+            type: "GET",
+            url: `/wishlists/${wishlist_id}/items`,
+            contentType: "application/json"
+        });
+
+        ajax.done(function (res) {
+            $("#delete-items-count").text(res.length);
+            
+            if (res.length === 0) {
+                $("#delete-items-container").html('<p class="text-muted">No items in this wishlist</p>');
+            } else {
+                let itemsHtml = '<table class="table table-striped table-condensed">';
+                itemsHtml += '<thead><tr><th>Product Name</th><th>Category</th><th>Price</th><th>Quantity</th></tr></thead><tbody>';
+                
+                res.forEach(function(item) {
+                    itemsHtml += `<tr>
+                        <td>${item.product_name}</td>
+                        <td>${item.category || 'N/A'}</td>
+                        <td>$${item.price || '0.00'}</td>
+                        <td>${item.quantity || 1}</td>
+                    </tr>`;
+                });
+                
+                itemsHtml += '</tbody></table>';
+                $("#delete-items-container").html(itemsHtml);
+            }
+        });
+
+        ajax.fail(function (res) {
+            $("#delete-items-count").text('Error loading');
+            $("#delete-items-container").html('<p class="text-danger">Error loading items</p>');
+        });
+    }
+
+    $("#delete-confirm-btn").click(function () {
+        if (!selectedWishlistForDelete) {
+            flash_message("No wishlist selected for deletion", 'error');
+            return;
+        }
+        
+        const wishlist_name = $("#delete-name").text();
+        
+        if (!confirm(`Are you sure you want to delete the wishlist "${wishlist_name}"? This will permanently remove the wishlist and all its items. This action cannot be undone.`)) {
+            return;
+        }
+        
+        $("#flash_message").fadeOut();
+        
+        const ajax = $.ajax({
+            type: "DELETE",
+            url: `/wishlists/${selectedWishlistForDelete}`,
+            contentType: "application/json"
+        });
+
+        ajax.done(function (res) {
+            flash_message("Success: Wishlist deleted successfully", 'success');
+            clear_delete_form();
+        });
+
+        ajax.fail(function (res) {
+            let errorMessage = "Error deleting wishlist";
+            if (res.responseJSON && res.responseJSON.message) {
+                errorMessage = res.responseJSON.message;
+            }
+            flash_message(errorMessage, 'error');
+        });
+    });
+
+    $("#delete-cancel-btn").click(function () {
+        clear_delete_form();
+    });
+
+    function clear_delete_form() {
+        $("#delete_customer_id").val('');
+        $("#delete-wishlist-selection").fadeOut();
+        $("#delete-wishlist-details").fadeOut();
+        selectedWishlistForDelete = null;
+        $("#flash_message").fadeOut();
+    }
+
+    // ****************************************
     //  R E A L - T I M E   V A L I D A T I O N
     // ****************************************
 

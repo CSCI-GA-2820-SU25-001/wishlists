@@ -389,9 +389,72 @@
                 </div>
                 
                 <div class="form-section">
-                    <div class="alert alert-info">
-                        <i class="glyphicon glyphicon-info-sign"></i>
-                        <strong>Coming Soon:</strong> Delete functionality will be implemented in future user stories.
+                    <form class="form-horizontal">
+                        <div class="form-group">
+                            <label class="control-label col-sm-2" for="delete_customer_id">Customer ID</label>
+                            <div class="col-sm-6">
+                                <input type="text" class="form-control" id="delete_customer_id" placeholder="Enter customer ID to find wishlists">
+                            </div>
+                            <div class="col-sm-4">
+                                <button type="button" class="btn btn-info" id="delete-lookup-btn">
+                                    <i class="glyphicon glyphicon-search"></i> Lookup
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                    
+                    <!-- Wishlist Selection (shows when customer has wishlists) -->
+                    <div id="delete-wishlist-selection" style="display: none;" class="panel panel-default">
+                        <div class="panel-header">
+                            <h4 class="panel-title">Customer's Wishlists</h4>
+                        </div>
+                        <div class="panel-body">
+                            <div id="delete-wishlists-list">
+                                <!-- Wishlists will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Wishlist Details Display (shows when wishlist is selected) -->
+                    <div id="delete-wishlist-details" style="display: none;" class="panel panel-default">
+                        <div class="panel-header">
+                            <h4 class="panel-title">Wishlist Details</h4>
+                        </div>
+                        <div class="panel-body">
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <strong>Name:</strong> <span id="delete-name"></span><br>
+                                    <strong>Customer ID:</strong> <span id="delete-customer-id"></span><br>
+                                    <strong>Visibility:</strong> <span id="delete-visibility"></span>
+                                </div>
+                                <div class="col-sm-6">
+                                    <strong>Created:</strong> <span id="delete-created"></span><br>
+                                    <strong>Items Count:</strong> <span id="delete-items-count"></span><br>
+                                    <strong>Description:</strong> <span id="delete-description"></span>
+                                </div>
+                            </div>
+                            
+                            <div id="delete-items-list" style="margin-top: 15px;">
+                                <h5>Items in this wishlist:</h5>
+                                <div id="delete-items-container" class="table-responsive">
+                                    <!-- Items will be populated here -->
+                                </div>
+                            </div>
+                            
+                            <div class="alert alert-warning" style="margin-top: 15px;">
+                                <i class="glyphicon glyphicon-warning-sign"></i>
+                                <strong>Warning:</strong> Deleting this wishlist will permanently remove it and all its items from the system. This action cannot be undone.
+                            </div>
+                            
+                            <div class="btn-group" style="margin-top: 10px;">
+                                <button type="button" class="btn btn-danger btn-lg" id="delete-confirm-btn">
+                                    <i class="glyphicon glyphicon-trash"></i> Delete Wishlist
+                                </button>
+                                <button type="button" class="btn btn-default" id="delete-cancel-btn">
+                                    <i class="glyphicon glyphicon-remove"></i> Cancel
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -86,3 +86,21 @@ Feature: Wishlist Management
         And I enter "<script>" in the Wishlist Name search field
         And I press the "Search" button
         Then the Wishlist Name field should show a validation error
+
+    Scenario: Look up wishlists for deletion
+        When I click the "Delete" tab
+        And I enter "123" in the delete Customer ID field
+        And I press the "Lookup" button
+        Then I should see the message "Success"
+
+    Scenario: Attempt to delete a non-existent wishlist  
+        When I click the "Delete" tab
+        And I enter "999" in the delete Customer ID field
+        And I press the "Lookup" button
+        Then I should see the message "No wishlists found"
+
+    Scenario: Attempt to delete without providing required information
+        When I click the "Delete" tab
+        And I press the "Lookup" button
+        Then I should see the message "Please enter a Customer ID"
+        
