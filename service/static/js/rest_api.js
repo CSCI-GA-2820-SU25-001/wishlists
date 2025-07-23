@@ -344,6 +344,116 @@ $(function () {
         $("#flash_message").fadeOut();
     });
 
+
+
+
+    // ****************************************
+    //  A C T I O N S   F U N C T I O N A L I T Y
+    // ****************************************
+
+    // Make Public
+    $("#make-public-btn").click(function () {
+        const wishlistId = $("#action_wishlist_id").val().trim();
+        if (!wishlistId) {
+            flash_message("Please enter a Wishlist ID", "error");
+            return;
+        }
+        $("#flash_message").fadeOut();
+
+        const btn = $(this);
+        const originalText = btn.html();
+        btn.prop("disabled", true).html('<span class="loading-spinner"></span> Publishing...');
+
+        $.ajax({
+            type: "POST",
+            url: `/wishlists/${wishlistId}/publish`,  // :contentReference[oaicite:0]{index=0}
+            contentType: "application/json"
+        })
+        .done(function (res) {
+            flash_message(res.message, "success");
+            $("#action-status-result").text(`Wishlist ${res.wishlist_id} is now Public.`);
+        })
+        .fail(function (res) {
+            const err = res.responseJSON && res.responseJSON.message
+                ? res.responseJSON.message
+                : `Error publishing wishlist ${wishlistId}.`;
+            flash_message(err, "error");
+        })
+        .always(function () {
+            btn.prop("disabled", false).html(originalText);
+        });
+    });
+
+    // Make Private
+    $("#make-private-btn").click(function () {
+        const wishlistId = $("#action_wishlist_id").val().trim();
+        if (!wishlistId) {
+            flash_message("Please enter a Wishlist ID", "error");
+            return;
+        }
+        $("#flash_message").fadeOut();
+
+        const btn = $(this);
+        const originalText = btn.html();
+        btn.prop("disabled", true).html('<span class="loading-spinner"></span> Unpublishing...');
+
+        $.ajax({
+            type: "POST",
+            url: `/wishlists/${wishlistId}/unpublish`,  // :contentReference[oaicite:1]{index=1}
+            contentType: "application/json"
+        })
+        .done(function (res) {
+            flash_message(res.message, "success");
+            $("#action-status-result").text(`Wishlist ${res.wishlist_id} is now Private.`);
+        })
+        .fail(function (res) {
+            const err = res.responseJSON && res.responseJSON.message
+                ? res.responseJSON.message
+                : `Error unpublishing wishlist ${wishlistId}.`;
+            flash_message(err, "error");
+        })
+        .always(function () {
+            btn.prop("disabled", false).html(originalText);
+        });
+    });
+
+    // Query Status
+    $("#query-status-btn").click(function () {
+        const wishlistId = $("#action_wishlist_id").val().trim();
+        if (!wishlistId) {
+            flash_message("Please enter a Wishlist ID", "error");
+            return;
+        }
+        $("#flash_message").fadeOut();
+
+        const btn = $(this);
+        const originalText = btn.html();
+        btn.prop("disabled", true).html('<span class="loading-spinner"></span> Querying...');
+
+        $.ajax({
+            type: "GET",
+            url: `/wishlists/${wishlistId}`,  // :contentReference[oaicite:2]{index=2}
+            contentType: "application/json"
+        })
+        .done(function (res) {
+            const statusText = res.is_public ? "Public" : "Private";
+            flash_message(`Wishlist ${res.id} is currently ${statusText}.`, "info");
+            $("#action-status-result").text(`Status: ${statusText}`);
+        })
+        .fail(function (res) {
+            const err = res.responseJSON && res.responseJSON.message
+                ? res.responseJSON.message
+                : `Error retrieving wishlist ${wishlistId}.`;
+            flash_message(err, "error");
+        })
+        .always(function () {
+            btn.prop("disabled", false).html(originalText);
+        });
+    });
+
+
+
+
     // ****************************************
     //  R E S U L T S   T A B L E   F U N C T I O N S
     // ****************************************
