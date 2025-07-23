@@ -281,6 +281,27 @@ $(function () {
         const name = $("#search_name").val().trim();
         const is_public = $("#search_is_public").val();
 
+            let hasError = false;
+
+    if (customer_id && isNaN(customer_id)) {
+        $("#search_customer_id").addClass("has-error");
+        hasError = true;
+    } else {
+        $("#search_customer_id").removeClass("has-error");
+    }
+
+    if (name && !/^[a-zA-Z0-9 ]+$/.test(name)) {
+        $("#search_name").addClass("has-error");
+        hasError = true;
+    } else {
+        $("#search_name").removeClass("has-error");
+    }
+
+    if (hasError) {
+        flash_message("Please fix the highlighted search fields", "error");
+        return;
+    }
+
         let queryParams = [];
         if (customer_id) queryParams.push(`customer_id=${encodeURIComponent(customer_id)}`);
         if (name) queryParams.push(`name=${encodeURIComponent(name)}`);

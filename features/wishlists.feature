@@ -74,3 +74,15 @@ Feature: Wishlist Management
         When I press the "Clear" button
         Then the search fields should be empty
         And the results table should show "No results to display"
+
+    Scenario: Show validation error when Customer ID is invalid
+        When I click the "View" tab
+        And I enter "!!@" in the Customer ID search field
+        And I press the "Search" button
+        Then the Customer ID field should show a validation error
+
+    Scenario: Show validation error when Wishlist Name is invalid
+        When I click the "View" tab
+        And I enter "<script>" in the Wishlist Name search field
+        And I press the "Search" button
+        Then the Wishlist Name field should show a validation error
