@@ -4,35 +4,263 @@ $(function () {
     //  U T I L I T Y   F U N C T I O N S
     // ****************************************
 
-    // Show flash message with type (success, error, info)
+    // Enhanced toast notification system (no layout shift)
     function flash_message(message, type = 'info') {
         const flashDiv = $("#flash_message");
         const flashText = $("#flash_text");
 
-        // Remove any existing classes
-        flashDiv.removeClass('flash-success flash-error flash-info');
+        // Remove any existing classes and animations
+        flashDiv.removeClass('flash-success flash-error flash-info flash-warning show hide');
 
-        // Add appropriate class and show message
+        // Add appropriate class and show message with close button
         flashDiv.addClass(`flash-${type}`);
-        flashText.text(message);
-        flashDiv.fadeIn();
+        flashText.html(`
+            ${message}
+            <button class="close-btn" onclick="hideFlashMessage()" title="Close">&times;</button>
+        `);
 
-        // Auto-hide after 5 seconds for success/info messages
-        if (type !== 'error') {
-            setTimeout(() => {
-                flashDiv.fadeOut();
-            }, 5000);
-        }
+        // Show with slide-in animation
+        flashDiv.show().addClass('show');
+
+        // Auto-hide with different timings based on type
+        const hideDelay = type === 'error' ? 8000 : type === 'warning' ? 6000 : 4000;
+        setTimeout(() => {
+            hideFlashMessage();
+        }, hideDelay);
     }
 
-    // Clear all form fields in a specific tab
-    function clear_form(tabId) {
-        $(`#${tabId} input[type="text"]`).val('');
-        $(`#${tabId} textarea`).val('');
-        $(`#${tabId} input[type="checkbox"]`).prop('checked', false);
-        $(`#${tabId} select`).prop('selectedIndex', 0);
+    // Function to manually hide flash message
+    window.hideFlashMessage = function() {
+        const flashDiv = $("#flash_message");
+        flashDiv.addClass('hide');
+        setTimeout(() => {
+            flashDiv.hide().removeClass('show hide');
+        }, 300); // Wait for animation to complete
+    };
+
+    // Enhanced loading state management
+    const LoadingManager = {
+        // Show loading state on button with enhanced options
+        showButtonLoading: function(buttonSelector, options = {}) {
+            const $button = $(buttonSelector);
+            const originalText = options.originalText || $button.html();
+            const loadingText = options.loadingText || 'Loading...';
+            const spinnerClass = options.spinnerClass || 'loading-spinner';
+
+            $button.prop('disabled', true);
+            $button.addClass('btn-loading');
+            $button.html(`<span class="${spinnerClass}"></span><span class="btn-text">${loadingText}</span>`);
+
+            // Store original text for restoration
+            $button.data('original-text', originalText);
+            return originalText;
+        },
+
+        // Hide loading state on button
+        hideButtonLoading: function(buttonSelector, originalText = null) {
+            const $button = $(buttonSelector);
+            const textToRestore = originalText || $button.data('original-text') || 'Button';
+
+            $button.prop('disabled', false);
+            $button.removeClass('btn-loading');
+            $button.html(textToRestore);
+            $button.removeData('original-text');
+        },
+
+        // Show loading overlay on panel with enhanced options
+        showPanelLoading: function(panelSelector, options = {}) {
+            const $panel = $(panelSelector);
+            if ($panel.find('.loading-overlay').length === 0) {
+                const loadingText = options.loadingText || '';
+                const spinnerSize = options.spinnerSize || 'loading-spinner-lg';
+                const overlayClass = options.dark ? 'loading-overlay loading-overlay-dark' : 'loading-overlay';
+
+                $panel.css('position', 'relative');
+                $panel.append(`
+                    <div class="${overlayClass}">
+                        <div class="loading-spinner ${spinnerSize}"></div>
+                        ${loadingText ? `<div class="loading-text">${loadingText}</div>` : ''}
+                    </div>
+                `);
+            }
+        },
+
+        // Hide loading overlay on panel
+        hidePanelLoading: function(panelSelector) {
+            $(panelSelector).find('.loading-overlay').remove();
+        },
+
+        // Show table loading state with skeleton rows
+        showTableLoading: function(tableSelector, rowCount = 3) {
+            const $table = $(tableSelector);
+            const $tbody = $table.find('tbody');
+            const columnCount = $table.find('thead th').length || 5;
+
+            $tbody.empty();
+            $table.addClass('table-loading');
+
+            for (let i = 0; i < rowCount; i++) {
+                let skeletonRow = '<tr class="table-skeleton-row">';
+                for (let j = 0; j < columnCount; j++) {
+                    skeletonRow += '<td class="table-skeleton-cell"><div class="skeleton skeleton-text"></div></td>';
+                }
+                skeletonRow += '</tr>';
+                $tbody.append(skeletonRow);
+            }
+        },
+
+        // Hide table loading state
+        hideTableLoading: function(tableSelector) {
+            const $table = $(tableSelector);
+            $table.removeClass('table-loading');
+            $table.find('.table-skeleton-row').remove();
+        },
+
+        // Show form loading state
+        showFormLoading: function(formSelector) {
+            const $form = $(formSelector);
+            $form.addClass('form-loading');
+            $form.find('.btn').prop('disabled', true);
+        },
+
+        // Hide form loading state
+        hideFormLoading: function(formSelector) {
+            const $form = $(formSelector);
+            $form.removeClass('form-loading');
+            $form.find('.btn').prop('disabled', false);
+        },
+
+        // Show progress bar
+        showProgress: function(containerSelector, progress = 0, options = {}) {
+            const $container = $(containerSelector);
+            const animated = options.animated ? 'progress-bar-animated' : '';
+            const colorClass = options.color ? `progress-bar-${options.color}` : '';
+
+            if ($container.find('.progress-container').length === 0) {
+                $container.append(`
+                    <div class="progress-container">
+                        <div class="progress-bar ${animated} ${colorClass}" style="width: ${progress}%"></div>
+                    </div>
+                `);
+            } else {
+                $container.find('.progress-bar').css('width', `${progress}%`);
+            }
+        },
+
+        // Update progress
+        updateProgress: function(containerSelector, progress) {
+            const $container = $(containerSelector);
+            $container.find('.progress-bar').css('width', `${progress}%`);
+        },
+
+        // Hide progress bar
+        hideProgress: function(containerSelector) {
+            $(containerSelector).find('.progress-container').remove();
+        }
+    };
+
+    // Legacy function wrappers for backward compatibility
+    function showButtonLoading(buttonSelector, originalText) {
+        return LoadingManager.showButtonLoading(buttonSelector, { originalText });
+    }
+
+    function hideButtonLoading(buttonSelector, originalText) {
+        LoadingManager.hideButtonLoading(buttonSelector, originalText);
+    }
+
+    function showPanelLoading(panelSelector) {
+        LoadingManager.showPanelLoading(panelSelector);
+    }
+
+    function hidePanelLoading(panelSelector) {
+        LoadingManager.hidePanelLoading(panelSelector);
+    }
+
+    // Enhanced AJAX wrapper with loading states
+    function makeAjaxRequest(options) {
+        const {
+            url,
+            method = 'GET',
+            data = null,
+            buttonSelector = null,
+            panelSelector = null,
+            successCallback = null,
+            errorCallback = null,
+            originalButtonText = null
+        } = options;
+
+        // Show loading states
+        let buttonText = '';
+        if (buttonSelector) {
+            buttonText = showButtonLoading(buttonSelector, originalButtonText);
+        }
+        if (panelSelector) {
+            showPanelLoading(panelSelector);
+        }
+
+        const ajaxOptions = {
+            type: method,
+            url: url,
+            contentType: "application/json"
+        };
+
+        if (data) {
+            ajaxOptions.data = JSON.stringify(data);
+        }
+
+        return $.ajax(ajaxOptions)
+            .done(function(response) {
+                if (successCallback) {
+                    successCallback(response);
+                }
+            })
+            .fail(function(xhr) {
+                let errorMessage = 'An unexpected error occurred';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                } else if (xhr.responseText) {
+                    try {
+                        const errorData = JSON.parse(xhr.responseText);
+                        errorMessage = errorData.message || errorMessage;
+                    } catch (e) {
+                        errorMessage = xhr.responseText;
+                    }
+                }
+
+                if (errorCallback) {
+                    errorCallback(errorMessage, xhr);
+                } else {
+                    flash_message(`<i class="fa fa-exclamation-circle"></i> ${errorMessage}`, 'error');
+                }
+            })
+            .always(function() {
+                // Hide loading states
+                if (buttonSelector) {
+                    hideButtonLoading(buttonSelector, buttonText);
+                }
+                if (panelSelector) {
+                    hidePanelLoading(panelSelector);
+                }
+            });
+    }
+
+    // Clear all form fields in a specific form
+    function clear_form(formId) {
+        if (formId === 'create') {
+            // Clear create form specifically
+            $('#create_name').val('');
+            $('#create_customer_id').val('');
+            $('#create_description').val('');
+            $('#create_is_public').val('false');
+        } else {
+            // Generic clear for other forms
+            $(`#${formId} input[type="text"]`).val('');
+            $(`#${formId} textarea`).val('');
+            $(`#${formId} input[type="checkbox"]`).prop('checked', false);
+            $(`#${formId} select`).prop('selectedIndex', 0);
+        }
         // Remove any error styling
-        $(`#${tabId} .has-error`).removeClass('has-error');
+        $('.has-error').removeClass('has-error');
     }
 
     // Validate required fields
@@ -185,52 +413,72 @@ $(function () {
         // Clear any existing messages
         $("#flash_message").fadeOut();
 
-        // Make API call
-        const ajax = $.ajax({
-            type: "POST",
+        // Show progress indicator
+        LoadingManager.showProgress('#create-progress', 0, { animated: true });
+        $('#create-progress').show();
+
+        // Simulate progress steps
+        let progress = 0;
+        const progressInterval = setInterval(() => {
+            progress += 20;
+            LoadingManager.updateProgress('#create-progress', Math.min(progress, 90));
+        }, 200);
+
+        // Use enhanced AJAX wrapper with loading states
+        makeAjaxRequest({
             url: "/wishlists",
-            contentType: "application/json",
-            data: JSON.stringify(data),
-        });
+            method: "POST",
+            data: data,
+            buttonSelector: createBtn,
+            panelSelector: "#create-form",
+            originalButtonText: originalText,
+            successCallback: function(res) {
+                // Complete progress
+                clearInterval(progressInterval);
+                LoadingManager.updateProgress('#create-progress', 100);
 
-        ajax.done(function (res) {
-            // Enhanced success message with more details
-            flash_message(`Success: Wishlist '${res.name}' created successfully with ID ${res.id}!`, 'success');
-
-            // Clear the form after successful creation
-            clear_form('create');
-
-            // Auto-refresh the view tab if it contains results
-            if ($("#results-body tr").length > 1) { // More than just the "no results" row
                 setTimeout(() => {
-                    $("#list-all-btn").trigger('click');
-                }, 500); // Small delay to let user see the success message
+                    $('#create-progress').fadeOut();
+                    LoadingManager.hideProgress('#create-progress');
+                }, 1000);
+
+                // Enhanced success message with more details and icon
+                flash_message(`<i class="fa fa-check-circle"></i> Success: Wishlist '${res.name}' created successfully with ID ${res.id}!`, 'success');
+
+                // Clear the form after successful creation
+                clear_form('create');
+
+                // Auto-refresh the view tab if it contains results
+                if ($("#results-body tr").length > 1) { // More than just the "no results" row
+                    setTimeout(() => {
+                        $("#list-all-btn").trigger('click');
+                    }, 500); // Small delay to let user see the success message
+                }
+            },
+            errorCallback: function(errorMessage, xhr) {
+                // Clear progress on error
+                clearInterval(progressInterval);
+                LoadingManager.updateProgress('#create-progress', 100);
+                LoadingManager.showProgress('#create-progress', 100, { color: 'error' });
+
+                setTimeout(() => {
+                    $('#create-progress').fadeOut();
+                    LoadingManager.hideProgress('#create-progress');
+                }, 2000);
+
+                // Enhanced error handling with specific status codes
+                if (xhr.status === 400) {
+                    errorMessage = "Invalid input data. Please check your entries and try again.";
+                } else if (xhr.status === 409) {
+                    errorMessage = "A wishlist with this name already exists for this customer.";
+                } else if (xhr.status === 500) {
+                    errorMessage = "Server error occurred. Please try again later.";
+                } else if (xhr.status === 0) {
+                    errorMessage = "Network error. Please check your connection and try again.";
+                }
+
+                flash_message(`<i class="fa fa-exclamation-circle"></i> ${errorMessage}`, 'error');
             }
-
-            // Re-enable the button
-            createBtn.prop('disabled', false).html(originalText);
-        });
-
-        ajax.fail(function (res) {
-            let errorMessage = "Error creating wishlist";
-
-            // Enhanced error handling
-            if (res.responseJSON && res.responseJSON.message) {
-                errorMessage = res.responseJSON.message;
-            } else if (res.status === 400) {
-                errorMessage = "Invalid input data. Please check your entries and try again.";
-            } else if (res.status === 409) {
-                errorMessage = "A wishlist with this name already exists for this customer.";
-            } else if (res.status === 500) {
-                errorMessage = "Server error occurred. Please try again later.";
-            } else if (res.status === 0) {
-                errorMessage = "Network error. Please check your connection and try again.";
-            }
-
-            flash_message(errorMessage, 'error');
-
-            // Re-enable the button
-            createBtn.prop('disabled', false).html(originalText);
         });
     }
 
@@ -245,7 +493,7 @@ $(function () {
     // ****************************************
 
     $("#retrieve-btn").click(function () {
-        const wishlist_id = $("#view_wishlist_id").val().trim();
+        const wishlist_id = $("#search_wishlist_id").val().trim();
 
         if (!wishlist_id) {
             flash_message("Please enter a Wishlist ID", 'error');
@@ -273,6 +521,77 @@ $(function () {
                 errorMessage = res.responseJSON.message;
             }
             flash_message(errorMessage, 'error');
+        });
+    });
+
+    // Modal save changes functionality
+    $("#save-changes-btn").click(function () {
+        const wishlist_id = $("#update_id").val();
+
+        if (!wishlist_id) {
+            flash_message("No wishlist loaded for updating", 'error');
+            return;
+        }
+
+        // Validate required fields
+        const requiredFields = [
+            { id: 'update_name', name: 'Wishlist Name' }
+        ];
+
+        if (!validate_required_fields(requiredFields)) {
+            return;
+        }
+
+        const name = $("#update_name").val().trim();
+
+        // Validate wishlist name format
+        if (!validate_update_wishlist_name(name)) {
+            return;
+        }
+
+        // Prepare update data
+        const data = {
+            name: name,
+            customer_id: $("#update_customer_id").val().trim(),
+            description: $("#update_description").val().trim(),
+            is_public: $("#update_is_public").val() === "true"
+        };
+
+        $("#flash_message").fadeOut();
+
+        // Use enhanced AJAX wrapper
+        makeAjaxRequest({
+            url: `/wishlists/${wishlist_id}`,
+            method: "PUT",
+            data: data,
+            buttonSelector: "#save-changes-btn",
+            originalButtonText: "Save Changes",
+            successCallback: function(res) {
+                flash_message(`<i class="fa fa-check-circle"></i> Success: Wishlist '${res.name}' updated successfully!`, 'success');
+
+                // Enhanced modal cleanup
+                $("#updateModal").modal('hide');
+                setTimeout(function() {
+                    forceModalCleanup();
+                }, 300);
+
+                // Refresh the results
+                setTimeout(() => {
+                    $("#list-all-btn").click();
+                }, 500);
+            },
+            errorCallback: function(errorMessage, xhr) {
+                if (xhr.status === 400) {
+                    errorMessage = "Invalid input data. Please check your entries and try again.";
+                } else if (xhr.status === 404) {
+                    errorMessage = "Wishlist not found. It may have been deleted by another user.";
+                } else if (xhr.status === 409) {
+                    errorMessage = "A wishlist with this name already exists for this customer.";
+                } else if (xhr.status === 500) {
+                    errorMessage = "Server error occurred. Please try again later.";
+                }
+                flash_message(`<i class="fa fa-exclamation-circle"></i> ${errorMessage}`, 'error');
+            }
         });
     });
 
@@ -307,6 +626,20 @@ $(function () {
         clear_results_table();
         $("#flash_message").fadeOut();
 
+        // Enhanced loading states for search
+        const $searchBtn = $(this);
+        const originalText = $searchBtn.html();
+
+        LoadingManager.showButtonLoading($searchBtn, {
+            loadingText: 'Searching...',
+            spinnerClass: 'loading-spinner loading-spinner-white'
+        });
+
+        LoadingManager.showTableLoading('#results-table', 3);
+        LoadingManager.showPanelLoading('#results-panel', {
+            loadingText: 'Searching wishlists...'
+        });
+
         const ajax = $.ajax({
             type: "GET",
             url: `/wishlists${queryString}`,
@@ -316,7 +649,7 @@ $(function () {
         ajax.done(function (res) {
             clear_results_table();
             update_results_table(res);
-            flash_message(`Success: Found ${res.length} wishlist(s)`, 'success');
+            flash_message(`<i class="fa fa-check-circle"></i> Success: Found ${res.length} wishlist(s)`, 'success');
         });
 
         ajax.fail(function (res) {
@@ -325,12 +658,32 @@ $(function () {
             if (res.responseJSON && res.responseJSON.message) {
                 errorMessage = res.responseJSON.message;
             }
-            flash_message(errorMessage, 'error');
+            flash_message(`<i class="fa fa-exclamation-circle"></i> ${errorMessage}`, 'error');
+        });
+
+        ajax.always(function() {
+            LoadingManager.hideButtonLoading($searchBtn, originalText);
+            LoadingManager.hideTableLoading('#results-table');
+            LoadingManager.hidePanelLoading('#results-panel');
         });
     });
 
     $("#list-all-btn").click(function () {
         $("#flash_message").fadeOut();
+
+        // Enhanced loading states for list all
+        const $listBtn = $(this);
+        const originalText = $listBtn.html();
+
+        LoadingManager.showButtonLoading($listBtn, {
+            loadingText: 'Loading...',
+            spinnerClass: 'loading-spinner loading-spinner-white'
+        });
+
+        LoadingManager.showTableLoading('#results-table', 5);
+        LoadingManager.showPanelLoading('#results-panel', {
+            loadingText: 'Loading all wishlists...'
+        });
 
         const ajax = $.ajax({
             type: "GET",
@@ -340,7 +693,7 @@ $(function () {
 
         ajax.done(function (res) {
             update_results_table(res);
-            flash_message(`Success: Listed ${res.length} wishlist(s)`, 'success');
+            flash_message(`<i class="fa fa-check-circle"></i> Success: Listed ${res.length} wishlist(s)`, 'success');
         });
 
         ajax.fail(function (res) {
@@ -349,12 +702,23 @@ $(function () {
             if (res.responseJSON && res.responseJSON.message) {
                 errorMessage = res.responseJSON.message;
             }
-            flash_message(errorMessage, 'error');
+            flash_message(`<i class="fa fa-exclamation-circle"></i> ${errorMessage}`, 'error');
+        });
+
+        ajax.always(function() {
+            LoadingManager.hideButtonLoading($listBtn, originalText);
+            LoadingManager.hideTableLoading('#results-table');
+            LoadingManager.hidePanelLoading('#results-panel');
         });
     });
 
     $("#view-clear-btn").click(function () {
-        clear_form('view');
+        // Clear search fields
+        $("#search_wishlist_id").val('');
+        $("#search_customer_id").val('');
+        $("#search_name").val('');
+        $("#search_is_public").val('');
+
         clear_results_table();
         $("#flash_message").fadeOut();
     });
@@ -377,7 +741,11 @@ $(function () {
 
         const btn = $(this);
         const originalText = btn.html();
-        btn.prop("disabled", true).html('<span class="loading-spinner"></span> Publishing...');
+
+        LoadingManager.showButtonLoading(btn, {
+            loadingText: 'Publishing...',
+            spinnerClass: 'loading-spinner loading-spinner-white'
+        });
 
         $.ajax({
             type: "POST",
@@ -395,7 +763,7 @@ $(function () {
             flash_message(err, "error");
         })
         .always(function () {
-            btn.prop("disabled", false).html(originalText);
+            LoadingManager.hideButtonLoading(btn, originalText);
         });
     });
 
@@ -410,7 +778,11 @@ $(function () {
 
         const btn = $(this);
         const originalText = btn.html();
-        btn.prop("disabled", true).html('<span class="loading-spinner"></span> Unpublishing...');
+
+        LoadingManager.showButtonLoading(btn, {
+            loadingText: 'Unpublishing...',
+            spinnerClass: 'loading-spinner loading-spinner-white'
+        });
 
         $.ajax({
             type: "POST",
@@ -428,7 +800,7 @@ $(function () {
             flash_message(err, "error");
         })
         .always(function () {
-            btn.prop("disabled", false).html(originalText);
+            LoadingManager.hideButtonLoading(btn, originalText);
         });
     });
 
@@ -443,7 +815,11 @@ $(function () {
 
         const btn = $(this);
         const originalText = btn.html();
-        btn.prop("disabled", true).html('<span class="loading-spinner"></span> Querying...');
+
+        LoadingManager.showButtonLoading(btn, {
+            loadingText: 'Querying...',
+            spinnerClass: 'loading-spinner loading-spinner-white'
+        });
 
         $.ajax({
             type: "GET",
@@ -462,7 +838,7 @@ $(function () {
             flash_message(err, "error");
         })
         .always(function () {
-            btn.prop("disabled", false).html(originalText);
+            LoadingManager.hideButtonLoading(btn, originalText);
         });
     });
 
@@ -475,34 +851,49 @@ $(function () {
 
     function update_results_table(wishlists) {
         const tbody = $("#results-body");
+        const countBadge = $("#results-count");
         tbody.empty();
 
         if (wishlists.length === 0) {
             tbody.append(`
                 <tr>
-                    <td colspan="7" class="text-center text-muted">No wishlists found</td>
+                    <td colspan="7" class="text-center text-muted">
+                        <i class="fa fa-info-circle"></i> No wishlists found
+                    </td>
                 </tr>
             `);
+            countBadge.text('0');
             return;
         }
+
+        countBadge.text(wishlists.length);
 
         wishlists.forEach(wishlist => {
             const row = `
                 <tr>
                     <td>${wishlist.id}</td>
-                    <td>${wishlist.name}</td>
+                    <td><strong>${wishlist.name}</strong></td>
                     <td>${wishlist.customer_id}</td>
-                    <td>${wishlist.description || ''}</td>
+                    <td>${wishlist.description || '<em>No description</em>'}</td>
                     <td>
                         <span class="label label-${wishlist.is_public ? 'success' : 'default'}">
+                            <i class="fa fa-${wishlist.is_public ? 'globe' : 'lock'}"></i>
                             ${wishlist.is_public ? 'Public' : 'Private'}
                         </span>
                     </td>
                     <td>${format_date(wishlist.created_at)}</td>
                     <td>
-                        <button class="btn btn-xs btn-info" onclick="view_wishlist(${wishlist.id})">
-                            <i class="glyphicon glyphicon-eye-open"></i> View
-                        </button>
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-sm btn-info" onclick="view_wishlist_items(${wishlist.id})" title="View Items in this wishlist">
+                                <i class="fa fa-shopping-cart"></i> Items
+                            </button>
+                            <button class="btn btn-sm btn-warning" onclick="edit_wishlist(${wishlist.id})" title="Edit this wishlist">
+                                <i class="fa fa-edit"></i> Edit
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="delete_wishlist(${wishlist.id}, '${wishlist.name}')" title="Delete this wishlist">
+                                <i class="fa fa-trash"></i> Delete
+                            </button>
+                        </div>
                     </td>
                 </tr>
             `;
@@ -512,22 +903,120 @@ $(function () {
 
     function clear_results_table() {
         const tbody = $("#results-body");
+        const countBadge = $("#results-count");
         tbody.empty();
         tbody.append(`
             <tr>
-                <td colspan="7" class="text-center text-muted">No results to display</td>
+                <td colspan="7" class="text-center text-muted">
+                    <i class="fa fa-info-circle"></i> No results to display
+                </td>
             </tr>
         `);
+        countBadge.text('0');
     }
 
     // ****************************************
     //  G L O B A L   F U N C T I O N S
     // ****************************************
 
-    // Make this function globally accessible for onclick handlers
+    // Enhanced global functions for new UI
     window.view_wishlist = function (wishlist_id) {
-        $("#view_wishlist_id").val(wishlist_id);
+        $("#search_wishlist_id").val(wishlist_id);
         $("#retrieve-btn").click();
+    };
+
+    // Switch to items tab and load wishlist items
+    window.view_wishlist_items = function (wishlist_id) {
+        // Switch to items tab
+        $('#items-tab').tab('show');
+
+        // Load the wishlist
+        $("#item_wishlist_id").val(wishlist_id);
+        $("#load-wishlist-btn").click();
+    };
+
+    // Edit wishlist using modal with enhanced loading
+    window.edit_wishlist = function (wishlist_id) {
+        // Clear any existing messages
+        $("#flash_message").fadeOut();
+
+        // Show loading state in modal
+        $("#updateModal").modal({
+            backdrop: true,
+            keyboard: true,
+            show: true
+        });
+
+        // Show loading overlay in modal
+        LoadingManager.showPanelLoading('#updateModal .modal-content', {
+            loadingText: 'Loading wishlist data...',
+            spinnerSize: 'loading-spinner-lg'
+        });
+
+        // Use enhanced AJAX wrapper
+        makeAjaxRequest({
+            url: `/wishlists/${wishlist_id}`,
+            method: "GET",
+            successCallback: function(wishlist) {
+                // Hide loading overlay
+                LoadingManager.hidePanelLoading('#updateModal .modal-content');
+
+                // Populate modal form
+                $("#update_id").val(wishlist.id);
+                $("#update_name").val(wishlist.name);
+                $("#update_customer_id").val(wishlist.customer_id);
+                $("#update_description").val(wishlist.description || '');
+                $("#update_is_public").val(wishlist.is_public.toString());
+
+                // Ensure modal is properly displayed
+                setTimeout(() => {
+                    $("#updateModal").addClass('show');
+                    $('body').addClass('modal-open');
+                }, 100);
+            },
+            errorCallback: function(errorMessage) {
+                LoadingManager.hidePanelLoading('#updateModal .modal-content');
+                $("#updateModal").modal('hide');
+                flash_message(`<i class="fa fa-exclamation-circle"></i> Error loading wishlist: ${errorMessage}`, 'error');
+            }
+        });
+    };
+
+    // Delete wishlist with confirmation and loading states
+    window.delete_wishlist = function (wishlist_id, wishlist_name) {
+        if (!confirm(`Are you sure you want to delete the wishlist "${wishlist_name}"?\n\nThis will permanently remove the wishlist and all its items. This action cannot be undone.`)) {
+            return;
+        }
+
+        // Show loading overlay on results panel during deletion
+        LoadingManager.showPanelLoading('#results-panel', {
+            loadingText: `Deleting "${wishlist_name}"...`,
+            spinnerSize: 'loading-spinner-lg'
+        });
+
+        const ajax = $.ajax({
+            type: "DELETE",
+            url: `/wishlists/${wishlist_id}`,
+            contentType: "application/json"
+        });
+
+        ajax.done(function (res) {
+            flash_message(`<i class="fa fa-check-circle"></i> Success: Wishlist "${wishlist_name}" deleted successfully`, 'success');
+            // Refresh the results
+            $("#list-all-btn").click();
+        });
+
+        ajax.fail(function (res) {
+            let errorMessage = "Error deleting wishlist";
+            if (res.responseJSON && res.responseJSON.message) {
+                errorMessage = res.responseJSON.message;
+            }
+            flash_message(`<i class="fa fa-exclamation-circle"></i> ${errorMessage}`, 'error');
+        });
+
+        ajax.always(function() {
+            LoadingManager.hidePanelLoading('#results-panel');
+        });
     };
 
     // ****************************************
@@ -541,6 +1030,73 @@ $(function () {
     $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
         // Clear flash messages when switching tabs
         $("#flash_message").fadeOut();
+    });
+
+    // Enhanced modal event handlers to prevent backdrop issues
+    $('#updateModal').on('show.bs.modal', function () {
+        // Ensure modal is properly positioned and clickable
+        $(this).css('z-index', 1050);
+        $('.modal-backdrop').css('z-index', 1040);
+    });
+
+    $('#updateModal').on('hidden.bs.modal', function () {
+        // Comprehensive cleanup when modal is closed
+        $('body').removeClass('modal-open');
+        $('.modal-backdrop').remove();
+
+        // Force remove any lingering backdrop elements
+        $('.modal-backdrop').each(function() {
+            $(this).remove();
+        });
+
+        // Reset body overflow
+        $('body').css('overflow', '');
+        $('body').css('padding-right', '');
+
+        // Ensure page is clickable
+        $('body').off('click.bs.modal.data-api');
+    });
+
+    // Additional cleanup for save changes button
+    $(document).on('click', '#save-changes-btn', function() {
+        // After save operation, ensure modal cleanup
+        setTimeout(function() {
+            forceModalCleanup();
+        }, 500);
+    });
+
+    // Additional cleanup for cancel/close buttons
+    $(document).on('click', '[data-dismiss="modal"], .modal .close', function() {
+        setTimeout(function() {
+            forceModalCleanup();
+        }, 300);
+    });
+
+    // Force modal cleanup function
+    function forceModalCleanup() {
+        $('body').removeClass('modal-open');
+        $('.modal-backdrop').remove();
+        $('body').css('overflow', '');
+        $('body').css('padding-right', '');
+        $('#updateModal').removeClass('show');
+        $('#updateModal').css('display', 'none');
+        $('body').off('click.bs.modal.data-api');
+
+        // Additional cleanup for any lingering modal states
+        $('.modal').removeClass('show');
+        $('.modal').css('display', 'none');
+        $('body').removeClass('modal-open');
+    }
+
+    // Global escape key handler for modal cleanup
+    $(document).keydown(function(e) {
+        if (e.keyCode === 27) { // ESC key
+            if ($('#updateModal').hasClass('show') || $('.modal-backdrop').length > 0) {
+                setTimeout(function() {
+                    forceModalCleanup();
+                }, 100);
+            }
+        }
     });
 
     // Add responsive behavior for mobile
@@ -617,69 +1173,7 @@ $(function () {
         });
     });
 
-    $("#save-changes-btn").click(function () {
-        const wishlist_id = $("#update_id").val();
 
-        if (!wishlist_id) {
-            flash_message("No wishlist loaded for updating", 'error');
-            return;
-        }
-
-        // Validate required fields
-        const requiredFields = [
-            { id: 'update_name', name: 'Wishlist Name' }
-        ];
-
-        if (!validate_required_fields(requiredFields)) {
-            return;
-        }
-
-        const name = $("#update_name").val().trim();
-
-        // Validate wishlist name format
-        if (!validate_update_wishlist_name(name)) {
-            return;
-        }
-
-        // Prepare update data
-        const data = {
-            name: name,
-            customer_id: $("#update_customer_id").val().trim(),
-            description: $("#update_description").val().trim(),
-            is_public: $("#update_is_public").val() === "true"
-        };
-
-        $("#flash_message").fadeOut();
-
-        const ajax = $.ajax({
-            type: "PUT",
-            url: `/wishlists/${wishlist_id}`,
-            contentType: "application/json",
-            data: JSON.stringify(data),
-        });
-
-        ajax.done(function (res) {
-            flash_message(`Success: Wishlist '${res.name}' updated successfully!`, 'success');
-        });
-
-        ajax.fail(function (res) {
-            let errorMessage = "Error updating wishlist";
-
-            if (res.responseJSON && res.responseJSON.message) {
-                errorMessage = res.responseJSON.message;
-            } else if (res.status === 400) {
-                errorMessage = "Invalid input data. Please check your entries and try again.";
-            } else if (res.status === 404) {
-                errorMessage = "Wishlist not found. It may have been deleted by another user.";
-            } else if (res.status === 409) {
-                errorMessage = "A wishlist with this name already exists for this customer.";
-            } else if (res.status === 500) {
-                errorMessage = "Server error occurred. Please try again later.";
-            }
-
-            flash_message(errorMessage, 'error');
-        });
-    });
 
     $("#cancel-update-btn").click(function () {
         // Hide the update form and clear fields

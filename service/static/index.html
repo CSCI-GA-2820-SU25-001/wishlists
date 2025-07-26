@@ -7,112 +7,153 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" type="image/x-icon" href="static/images/newapp-icon.png">
     <link rel="stylesheet" href="static/css/flatly_bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="static/css/admin-styles.css">
     <style>
+        /* Custom styles specific to this page */
         .tab-content {
-            padding: 20px 0;
+            padding: var(--spacing-lg) 0;
         }
-        .admin-header {
-            background: linear-gradient(135deg, #2c3e50, #3498db);
-            color: white;
-            padding: 30px 0;
-            margin-bottom: 30px;
-        }
-        .admin-header h1 {
-            color: white;
-            margin: 0;
-        }
-        .admin-header .lead {
-            color: #ecf0f1;
-            margin-top: 10px;
-        }
-        .flash-message {
-            min-height: 50px;
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 4px;
-            display: none;
-        }
-        .flash-success {
-            background-color: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
-        }
-        .flash-error {
-            background-color: #f8d7da;
-            border: 1px solid #f5c6cb;
-            color: #721c24;
-        }
-        .flash-info {
-            background-color: #d1ecf1;
-            border: 1px solid #bee5eb;
-            color: #0c5460;
-        }
+
         .section-header {
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+            font-weight: var(--font-weight-semibold);
+            color: var(--secondary-color);
         }
-        .form-section {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-        .results-section {
-            background: white;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            padding: 20px;
-        }
-        .nav-tabs .nav-link.active {
-            background-color: #3498db;
-            border-color: #3498db;
-            color: white;
-        }
-        .nav-tabs .nav-link {
-            color: #3498db;
-            border: 1px solid #3498db;
-            margin-right: 5px;
-        }
-        .nav-tabs .nav-link:hover {
-            background-color: #ecf0f1;
-        }
-        .table-responsive {
-            max-height: 500px;
-            overflow-y: auto;
-        }
+
         .action-buttons {
-            margin: 20px 0;
+            margin: var(--spacing-lg) 0;
         }
+
         .action-buttons .btn {
-            margin-right: 10px;
-            margin-bottom: 10px;
+            margin-right: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
         }
-        .has-error {
-            border-color: #d9534f !important;
-            box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 6px rgba(217,83,79,.6) !important;
+
+        /* Modal enhancements */
+        .modal-content {
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-lg);
+            border: none;
         }
-        .has-error:focus {
-            border-color: #d9534f !important;
-            box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 6px rgba(217,83,79,.6) !important;
+
+        .modal-header {
+            border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+            background: linear-gradient(135deg, var(--light-gray), var(--white));
+            border-bottom: 1px solid var(--medium-gray);
+            padding: var(--spacing-lg);
         }
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
+
+        .modal-title {
+            font-weight: var(--font-weight-semibold);
+            color: var(--secondary-color);
         }
-        .loading-spinner {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid #3498db;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
+
+        .modal-body {
+            padding: var(--spacing-lg);
+        }
+
+        .modal-footer {
+            padding: var(--spacing-lg);
+            border-top: 1px solid var(--medium-gray);
+        }
+
+        /* Fix modal backdrop and z-index issues */
+        .modal {
+            z-index: 1050 !important;
+        }
+
+        .modal-backdrop {
+            z-index: 1040 !important;
+            opacity: 0.5 !important;
+        }
+
+        .modal.fade .modal-dialog {
+            transition: transform 0.3s ease-out;
+            transform: translate(0, -50px);
+        }
+
+        .modal.show .modal-dialog {
+            transform: none;
+        }
+
+        /* Ensure modal content is clickable */
+        .modal-dialog {
+            position: relative;
+            z-index: 1051;
+        }
+
+        .modal-content {
+            position: relative;
+            z-index: 1052;
+            pointer-events: auto;
+        }
+
+        /* Action buttons in table */
+        .btn-xs {
+            padding: var(--spacing-xs) var(--spacing-sm);
+            font-size: var(--font-size-xs);
+            margin: 1px;
+            min-height: auto;
+        }
+
+        .btn-sm {
+            padding: var(--spacing-sm) var(--spacing-md);
+            font-size: var(--font-size-sm);
+            margin: 2px;
+            min-height: auto;
+            white-space: nowrap;
+        }
+
+        /* Enhanced action button group */
+        .btn-group {
+            display: flex;
+            gap: var(--spacing-xs);
+        }
+
+        .btn-group .btn {
+            margin: 0;
+            border-radius: var(--border-radius-sm);
+        }
+
+        /* Form button group with proper spacing */
+        .form-button-group {
+            display: flex;
+            gap: var(--spacing-md);
+            justify-content: center;
+            margin-top: var(--spacing-lg);
+        }
+
+        .form-button-group .btn {
+            flex: 1;
+            max-width: 150px;
+        }
+
+        /* Font Awesome icon styling for consistent appearance */
+        .fa {
             margin-right: 5px;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+
+        /* Action button improvements */
+        .btn-group .btn {
+            font-size: var(--font-size-sm);
+            padding: 4px 8px;
+            min-width: 70px;
+        }
+
+        .btn-group .btn .fa {
+            margin-right: 3px;
+        }
+
+        /* Ensure proper spacing for icons in different contexts */
+        .panel-title .fa,
+        .modal-title .fa,
+        .nav-link .fa,
+        h1 .fa,
+        h3 .fa {
+            margin-right: 8px;
         }
     </style>
 </head>
@@ -122,7 +163,7 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-12 text-center">
-                    <h1><i class="glyphicon glyphicon-list-alt"></i> Wishlist Admin Interface</h1>
+                    <h1><i class="fa fa-list-alt"></i> Wishlist Admin Interface</h1>
                     <p class="lead">Centralized dashboard for eCommerce managers to manage customer wishlists</p>
                 </div>
             </div>
@@ -135,334 +176,451 @@
             <span id="flash_text"></span>
         </div>
 
-        <!-- Navigation Tabs -->
+        <!-- Navigation Tabs - Enhanced 3-Tab Structure -->
         <ul class="nav nav-tabs" id="adminTabs" role="tablist">
             <li class="nav-item" role="presentation">
-                <a class="nav-link active" id="create-tab" data-toggle="tab" href="#create" role="tab" aria-controls="create" aria-selected="true">
-                    <i class="glyphicon glyphicon-plus"></i> Create
+                <a class="nav-link active" id="wishlists-tab" data-toggle="tab" href="#wishlists" role="tab" aria-controls="wishlists" aria-selected="true">
+                    <i class="fa fa-list-alt"></i> Manage Wishlists
                 </a>
             </li>
             <li class="nav-item" role="presentation">
-                <a class="nav-link" id="view-tab" data-toggle="tab" href="#view" role="tab" aria-controls="view" aria-selected="false">
-                    <i class="glyphicon glyphicon-search"></i> View
-                </a>
-            </li>
-            <li class="nav-item" role="presentation">
-                <a class="nav-link" id="update-tab" data-toggle="tab" href="#update" role="tab" aria-controls="update" aria-selected="false">
-                    <i class="glyphicon glyphicon-edit"></i> Update
-                </a>
-            </li>
-            <li class="nav-item" role="presentation">
-                <a class="nav-link" id="delete-tab" data-toggle="tab" href="#delete" role="tab" aria-controls="delete" aria-selected="false">
-                    <i class="glyphicon glyphicon-trash"></i> Delete
+                <a class="nav-link" id="items-tab" data-toggle="tab" href="#items" role="tab" aria-controls="items" aria-selected="false">
+                    <i class="fa fa-shopping-cart"></i> Manage Items
                 </a>
             </li>
             <li class="nav-item" role="presentation">
                 <a class="nav-link" id="actions-tab" data-toggle="tab" href="#actions" role="tab" aria-controls="actions" aria-selected="false">
-                    <i class="glyphicon glyphicon-cog"></i> Actions
+                    <i class="fa fa-cog"></i> Actions
                 </a>
             </li>
         </ul>
 
         <!-- Tab Content -->
         <div class="tab-content" id="adminTabContent">
-            
-            <!-- CREATE TAB -->
-            <div class="tab-pane fade show active" id="create" role="tabpanel" aria-labelledby="create-tab">
-                <div class="section-header">
-                    <h3><i class="glyphicon glyphicon-plus"></i> Create New Wishlist</h3>
-                    <p>Create a new wishlist for a customer</p>
-                </div>
-                
-                <div class="form-section">
-                    <form id="create-form" class="form-horizontal">
-                        <div class="form-group">
-                            <label class="control-label col-sm-2" for="create_name">Wishlist Name *</label>
-                            <div class="col-sm-10">
-                                <input type="text" class="form-control" id="create_name" placeholder="Enter wishlist name" required>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="control-label col-sm-2" for="create_customer_id">Customer ID *</label>
-                            <div class="col-sm-10">
-                                <input type="text" class="form-control" id="create_customer_id" placeholder="Enter customer ID" required>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="control-label col-sm-2" for="create_description">Description</label>
-                            <div class="col-sm-10">
-                                <textarea class="form-control" id="create_description" rows="3" placeholder="Enter description (optional)"></textarea>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="control-label col-sm-2" for="create_is_public">Visibility</label>
-                            <div class="col-sm-10">
-                                <select class="form-control" id="create_is_public">
-                                    <option value="false">Private</option>
-                                    <option value="true">Public</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div class="action-buttons">
-                            <button type="button" class="btn btn-success btn-lg" id="create-btn">
-                                <i class="glyphicon glyphicon-plus"></i> Create Wishlist
-                            </button>
-                            <button type="button" class="btn btn-default" id="create-clear-btn">
-                                <i class="glyphicon glyphicon-refresh"></i> Clear Form
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
 
-            <!-- VIEW TAB -->
-            <div class="tab-pane fade" id="view" role="tabpanel" aria-labelledby="view-tab">
-                <div class="section-header">
-                    <h3><i class="glyphicon glyphicon-search"></i> View Wishlists</h3>
-                    <p>Search, retrieve, and view existing wishlists</p>
-                </div>
-                
-                <div class="form-section">
-                    <form class="form-horizontal">
-                        <div class="form-group">
-                            <label class="control-label col-sm-2" for="view_wishlist_id">Wishlist ID</label>
-                            <div class="col-sm-6">
-                                <input type="text" class="form-control" id="view_wishlist_id" placeholder="Enter wishlist ID">
-                            </div>
-                            <div class="col-sm-4">
-                                <button type="button" class="btn btn-primary" id="retrieve-btn">
-                                    <i class="glyphicon glyphicon-download"></i> Retrieve
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <hr>
-                        
-                        <div class="form-group">
-                            <label class="control-label col-sm-2">Search Filters</label>
-                            <div class="col-sm-4">
-                                <input type="text" class="form-control" id="search_customer_id" placeholder="Customer ID">
-                            </div>
-                            <div class="col-sm-4">
-                                <input type="text" class="form-control" id="search_name" placeholder="Wishlist Name">
-                            </div>
-                            <div class="col-sm-2">
-                                <select class="form-control" id="search_is_public">
-                                    <option value="">All</option>
-                                    <option value="true">Public</option>
-                                    <option value="false">Private</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div class="action-buttons">
-                            <button type="button" class="btn btn-primary" id="search-btn">
-                                <i class="glyphicon glyphicon-search"></i> Search
-                            </button>
-                            <button type="button" class="btn btn-info" id="list-all-btn">
-                                <i class="glyphicon glyphicon-list"></i> List All
-                            </button>
-                            <button type="button" class="btn btn-default" id="view-clear-btn">
-                                <i class="glyphicon glyphicon-refresh"></i> Clear
-                            </button>
-                        </div>
-                    </form>
-                </div>
-                
-                <div class="results-section">
-                    <h4>Search Results</h4>
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover" id="results-table">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Name</th>
-                                    <th>Customer ID</th>
-                                    <th>Description</th>
-                                    <th>Visibility</th>
-                                    <th>Created</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="results-body">
-                                <tr>
-                                    <td colspan="7" class="text-center text-muted">No results to display. Use search or list all to view wishlists.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+            <!-- MANAGE WISHLISTS TAB -->
+            <div class="tab-pane fade show active" id="wishlists" role="tabpanel" aria-labelledby="wishlists-tab">
 
-            <!-- UPDATE TAB -->
-            <div class="tab-pane fade" id="update" role="tabpanel" aria-labelledby="update-tab">
-                <div class="section-header">
-                    <h3><i class="glyphicon glyphicon-edit"></i> Update Wishlist</h3>
-                    <p>Modify existing wishlist details</p>
-                </div>
-                
-                <!-- Search and Load Section -->
-                <div class="form-section">
-                    <h4>Find Wishlist to Update</h4>
-                    <form class="form-horizontal">
-                        <div class="form-group">
-                            <label class="control-label col-sm-2" for="update_search_customer_id">Customer ID</label>
-                            <div class="col-sm-4">
-                                <input type="text" class="form-control" id="update_search_customer_id" placeholder="Enter customer ID">
+                <!-- Quick Create Section -->
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="panel panel-primary">
+                            <div class="panel-heading">
+                                <h4 class="panel-title">
+                                    <i class="fa fa-plus"></i> Quick Create Wishlist
+                                </h4>
                             </div>
-                            <label class="control-label col-sm-2" for="update_search_name">Wishlist Name</label>
-                            <div class="col-sm-4">
-                                <input type="text" class="form-control" id="update_search_name" placeholder="Enter wishlist name">
-                            </div>
-                        </div>
-                        
-                        <div class="action-buttons">
-                            <button type="button" class="btn btn-primary" id="load-btn">
-                                <i class="glyphicon glyphicon-download"></i> Load Wishlist
-                            </button>
-                            <button type="button" class="btn btn-default" id="update-clear-search-btn">
-                                <i class="glyphicon glyphicon-refresh"></i> Clear Search
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                            <div class="panel-body">
+                                <form id="create-form">
+                                    <div class="form-group">
+                                        <label for="create_name">Wishlist Name *</label>
+                                        <input type="text" class="form-control" id="create_name" placeholder="Enter wishlist name" required>
+                                    </div>
 
-                <!-- Update Form Section (initially hidden) -->
-                <div class="form-section" id="update-form-section" style="display: none;">
-                    <h4>Update Wishlist Details</h4>
-                    <form id="update-form" class="form-horizontal">
-                        <input type="hidden" id="update_id">
-                        
-                        <div class="form-group">
-                            <label class="control-label col-sm-2" for="update_name">Wishlist Name *</label>
-                            <div class="col-sm-10">
-                                <input type="text" class="form-control" id="update_name" placeholder="Enter wishlist name" required>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="control-label col-sm-2" for="update_customer_id">Customer ID *</label>
-                            <div class="col-sm-10">
-                                <input type="text" class="form-control" id="update_customer_id" placeholder="Customer ID" readonly>
-                                <p class="help-block">Customer ID cannot be changed to maintain data integrity</p>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="control-label col-sm-2" for="update_description">Description</label>
-                            <div class="col-sm-10">
-                                <textarea class="form-control" id="update_description" rows="3" placeholder="Enter description (optional)"></textarea>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="control-label col-sm-2" for="update_is_public">Visibility</label>
-                            <div class="col-sm-10">
-                                <select class="form-control" id="update_is_public">
-                                    <option value="false">Private</option>
-                                    <option value="true">Public</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div class="action-buttons">
-                            <button type="button" class="btn btn-success btn-lg" id="save-changes-btn">
-                                <i class="glyphicon glyphicon-floppy-disk"></i> Save Changes
-                            </button>
-                            <button type="button" class="btn btn-default" id="cancel-update-btn">
-                                <i class="glyphicon glyphicon-remove"></i> Cancel
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+                                    <div class="form-group">
+                                        <label for="create_customer_id">Customer ID *</label>
+                                        <input type="text" class="form-control" id="create_customer_id" placeholder="Enter customer ID" required>
+                                    </div>
 
-            <!-- DELETE TAB -->
-            <div class="tab-pane fade" id="delete" role="tabpanel" aria-labelledby="delete-tab">
-                <div class="section-header">
-                    <h3><i class="glyphicon glyphicon-trash"></i> Delete Wishlist</h3>
-                    <p>Remove wishlists from the system</p>
-                </div>
-                
-                <div class="form-section">
-                    <form class="form-horizontal">
-                        <div class="form-group">
-                            <label class="control-label col-sm-2" for="delete_customer_id">Customer ID</label>
-                            <div class="col-sm-6">
-                                <input type="text" class="form-control" id="delete_customer_id" placeholder="Enter customer ID to find wishlists">
-                            </div>
-                            <div class="col-sm-4">
-                                <button type="button" class="btn btn-info" id="delete-lookup-btn">
-                                    <i class="glyphicon glyphicon-search"></i> Lookup
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                    
-                    <!-- Wishlist Selection (shows when customer has wishlists) -->
-                    <div id="delete-wishlist-selection" style="display: none;" class="panel panel-default">
-                        <div class="panel-header">
-                            <h4 class="panel-title">Customer's Wishlists</h4>
-                        </div>
-                        <div class="panel-body">
-                            <div id="delete-wishlists-list">
-                                <!-- Wishlists will be populated here -->
+                                    <div class="form-group">
+                                        <label for="create_description">Description</label>
+                                        <textarea class="form-control" id="create_description" rows="2" placeholder="Optional description"></textarea>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="create_is_public">Visibility</label>
+                                        <select class="form-control" id="create_is_public">
+                                            <option value="false">Private</option>
+                                            <option value="true">Public</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-button-group">
+                                        <button type="button" class="btn btn-success" id="create-btn">
+                                            <i class="fa fa-plus"></i> Create
+                                        </button>
+                                        <button type="button" class="btn btn-secondary" id="create-clear-btn">
+                                            <i class="fa fa-refresh"></i> Clear
+                                        </button>
+                                    </div>
+
+                                    <!-- Progress indicator for create operations -->
+                                    <div id="create-progress" style="display: none; margin-top: 15px;">
+                                        <div class="progress-container">
+                                            <div class="progress-bar progress-bar-animated" style="width: 0%"></div>
+                                        </div>
+                                        <small class="text-muted">Creating wishlist...</small>
+                                    </div>
+                                </form>
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Wishlist Details Display (shows when wishlist is selected) -->
-                    <div id="delete-wishlist-details" style="display: none;" class="panel panel-default">
-                        <div class="panel-header">
-                            <h4 class="panel-title">Wishlist Details</h4>
+
+                    <!-- Search & Filter Section -->
+                    <div class="col-md-8">
+                        <div class="panel panel-info">
+                            <div class="panel-heading">
+                                <h4 class="panel-title">
+                                    <i class="fa fa-search"></i> Search & Filter Wishlists
+                                </h4>
+                            </div>
+                            <div class="panel-body">
+                                <form class="form-inline">
+                                    <div class="form-group">
+                                        <label for="search_wishlist_id">Wishlist ID:</label>
+                                        <input type="text" class="form-control" id="search_wishlist_id" placeholder="ID" style="width: 80px;">
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="search_customer_id">Customer ID:</label>
+                                        <input type="text" class="form-control" id="search_customer_id" placeholder="Customer ID" style="width: 120px;">
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="search_name">Name:</label>
+                                        <input type="text" class="form-control" id="search_name" placeholder="Wishlist name" style="width: 150px;">
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="search_is_public">Visibility:</label>
+                                        <select class="form-control" id="search_is_public" style="width: 100px;">
+                                            <option value="">All</option>
+                                            <option value="true">Public</option>
+                                            <option value="false">Private</option>
+                                        </select>
+                                    </div>
+                                </form>
+
+                                <div class="action-buttons" style="margin-top: 15px;">
+                                    <button type="button" class="btn btn-primary" id="retrieve-btn">
+                                        <i class="fa fa-download"></i> Retrieve
+                                    </button>
+                                    <button type="button" class="btn btn-primary" id="search-btn">
+                                        <i class="fa fa-search"></i> Search
+                                    </button>
+                                    <button type="button" class="btn btn-info" id="list-all-btn">
+                                        <i class="fa fa-list"></i> List All
+                                    </button>
+                                    <button type="button" class="btn btn-default" id="view-clear-btn">
+                                        <i class="fa fa-refresh"></i> Clear
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                        <div class="panel-body">
-                            <div class="row">
-                                <div class="col-sm-6">
-                                    <strong>Name:</strong> <span id="delete-name"></span><br>
-                                    <strong>Customer ID:</strong> <span id="delete-customer-id"></span><br>
-                                    <strong>Visibility:</strong> <span id="delete-visibility"></span>
-                                </div>
-                                <div class="col-sm-6">
-                                    <strong>Created:</strong> <span id="delete-created"></span><br>
-                                    <strong>Items Count:</strong> <span id="delete-items-count"></span><br>
-                                    <strong>Description:</strong> <span id="delete-description"></span>
+                    </div>
+                </div>
+
+
+                <!-- Results Section -->
+                <div class="row" style="margin-top: 20px;">
+                    <div class="col-md-12">
+                        <div class="panel panel-default" id="results-panel">
+                            <div class="panel-heading">
+                                <h4 class="panel-title">
+                                    <i class="fa fa-list"></i> Wishlists
+                                    <span class="badge" id="results-count">0</span>
+                                </h4>
+                            </div>
+                            <div class="panel-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-hover" id="results-table">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Name</th>
+                                                <th>Customer ID</th>
+                                                <th>Description</th>
+                                                <th>Visibility</th>
+                                                <th>Created</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="results-body">
+                                            <tr>
+                                                <td colspan="7" class="text-center text-muted">
+                                                    <i class="fa fa-info-circle"></i> No wishlists to display. Use search or list all to view wishlists.
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
-                            
-                            <div id="delete-items-list" style="margin-top: 15px;">
-                                <h5>Items in this wishlist:</h5>
-                                <div id="delete-items-container" class="table-responsive">
-                                    <!-- Items will be populated here -->
-                                </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Update Modal (Hidden by default) -->
+                <div class="modal fade" id="updateModal" tabindex="-1" role="dialog">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                <h4 class="modal-title">
+                                    <i class="fa fa-edit"></i> Update Wishlist
+                                </h4>
                             </div>
-                            
-                            <div class="alert alert-warning" style="margin-top: 15px;">
-                                <i class="glyphicon glyphicon-warning-sign"></i>
-                                <strong>Warning:</strong> Deleting this wishlist will permanently remove it and all its items from the system. This action cannot be undone.
+                            <div class="modal-body">
+                                <form id="update-form">
+                                    <input type="hidden" id="update_id">
+
+                                    <div class="form-group">
+                                        <label for="update_name">Wishlist Name *</label>
+                                        <input type="text" class="form-control" id="update_name" required>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="update_customer_id">Customer ID</label>
+                                        <input type="text" class="form-control" id="update_customer_id" readonly>
+                                        <p class="help-block">Customer ID cannot be changed</p>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="update_description">Description</label>
+                                        <textarea class="form-control" id="update_description" rows="3"></textarea>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="update_is_public">Visibility</label>
+                                        <select class="form-control" id="update_is_public">
+                                            <option value="false">Private</option>
+                                            <option value="true">Public</option>
+                                        </select>
+                                    </div>
+                                </form>
                             </div>
-                            
-                            <div class="btn-group" style="margin-top: 10px;">
-                                <button type="button" class="btn btn-danger btn-lg" id="delete-confirm-btn">
-                                    <i class="glyphicon glyphicon-trash"></i> Delete Wishlist
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-success" id="save-changes-btn">
+                                    <i class="fa fa-save"></i> Save Changes
                                 </button>
-                                <button type="button" class="btn btn-default" id="delete-cancel-btn">
-                                    <i class="glyphicon glyphicon-remove"></i> Cancel
+                                <button type="button" class="btn btn-default" data-dismiss="modal">
+                                    <i class="fa fa-times"></i> Cancel
                                 </button>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- MANAGE ITEMS TAB -->
+            <div class="tab-pane fade" id="items" role="tabpanel" aria-labelledby="items-tab">
+                <div class="row">
+                    <!-- Select Wishlist Section -->
+                    <div class="col-md-4">
+                        <div class="panel panel-primary">
+                            <div class="panel-heading">
+                                <h4 class="panel-title">
+                                    <i class="fa fa-list-alt"></i> Select Wishlist
+                                </h4>
+                            </div>
+                            <div class="panel-body">
+                                <form>
+                                    <div class="form-group">
+                                        <label for="item_wishlist_id">Wishlist ID</label>
+                                        <input type="text" class="form-control" id="item_wishlist_id" placeholder="Enter wishlist ID">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="item_customer_id">Or Customer ID</label>
+                                        <input type="text" class="form-control" id="item_customer_id" placeholder="Enter customer ID">
+                                    </div>
+                                    <button type="button" class="btn btn-primary btn-block" id="load-wishlist-btn">
+                                        <i class="fa fa-download"></i> Load Wishlist
+                                    </button>
+                                </form>
+
+                                <!-- Wishlist Info (Hidden initially) -->
+                                <div id="selected-wishlist-info" style="display: none; margin-top: 15px;">
+                                    <div class="alert alert-info">
+                                        <strong>Selected Wishlist:</strong><br>
+                                        <span id="selected-wishlist-name"></span><br>
+                                        <small>Customer: <span id="selected-customer-id"></span></small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Add Item Section -->
+                    <div class="col-md-8">
+                        <div class="panel panel-success" id="add-item-panel" style="display: none;">
+                            <div class="panel-heading">
+                                <h4 class="panel-title">
+                                    <i class="fa fa-plus"></i> Add New Item
+                                </h4>
+                            </div>
+                            <div class="panel-body">
+                                <form id="add-item-form" class="form-horizontal">
+                                    <input type="hidden" id="selected_wishlist_id">
+
+                                    <div class="form-group">
+                                        <label class="control-label col-sm-3" for="item_product_id">Product ID *</label>
+                                        <div class="col-sm-9">
+                                            <input type="text" class="form-control" id="item_product_id" placeholder="Enter product ID" required>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="control-label col-sm-3" for="item_product_name">Product Name *</label>
+                                        <div class="col-sm-9">
+                                            <input type="text" class="form-control" id="item_product_name" placeholder="Enter product name" required>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="control-label col-sm-3" for="item_product_description">Description</label>
+                                        <div class="col-sm-9">
+                                            <textarea class="form-control" id="item_product_description" rows="2" placeholder="Product description"></textarea>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="control-label col-sm-3" for="item_product_price">Price *</label>
+                                        <div class="col-sm-4">
+                                            <div class="input-group">
+                                                <span class="input-group-addon">$</span>
+                                                <input type="number" class="form-control" id="item_product_price" placeholder="0.00" step="0.01" min="0" required>
+                                            </div>
+                                        </div>
+                                        <label class="control-label col-sm-2" for="item_quantity">Quantity</label>
+                                        <div class="col-sm-3">
+                                            <input type="number" class="form-control" id="item_quantity" placeholder="1" min="1" value="1">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="control-label col-sm-3" for="item_category">Category</label>
+                                        <div class="col-sm-9">
+                                            <input type="text" class="form-control" id="item_category" placeholder="Product category">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <div class="col-sm-offset-3 col-sm-9">
+                                            <button type="button" class="btn btn-success" id="add-item-btn">
+                                                <i class="fa fa-plus"></i> Add Item
+                                            </button>
+                                            <button type="button" class="btn btn-default" id="clear-item-form-btn">
+                                                <i class="fa fa-refresh"></i> Clear
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Items List Section -->
+                <div class="row" style="margin-top: 20px;">
+                    <div class="col-md-12">
+                        <div class="panel panel-default" id="items-list-panel" style="display: none;">
+                            <div class="panel-heading">
+                                <h4 class="panel-title">
+                                    <i class="fa fa-shopping-cart"></i> Items in Wishlist
+                                    <span class="badge" id="items-count">0</span>
+                                    <div class="pull-right">
+                                        <button type="button" class="btn btn-xs btn-info" id="refresh-items-btn">
+                                            <i class="fa fa-refresh"></i> Refresh
+                                        </button>
+                                    </div>
+                                </h4>
+                            </div>
+                            <div class="panel-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-hover" id="items-table">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Product Name</th>
+                                                <th>Description</th>
+                                                <th>Price</th>
+                                                <th>Quantity</th>
+                                                <th>Category</th>
+                                                <th>Likes</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="items-body">
+                                            <tr>
+                                                <td colspan="8" class="text-center text-muted">
+                                                    <i class="fa fa-info-circle"></i> Select a wishlist to view its items.
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Edit Item Modal -->
+                <div class="modal fade" id="editItemModal" tabindex="-1" role="dialog">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                <h4 class="modal-title">
+                                    <i class="fa fa-edit"></i> Edit Item
+                                </h4>
+                            </div>
+                            <div class="modal-body">
+                                <form id="edit-item-form">
+                                    <input type="hidden" id="edit_item_id">
+                                    <input type="hidden" id="edit_wishlist_id">
+
+                                    <div class="form-group">
+                                        <label for="edit_product_name">Product Name *</label>
+                                        <input type="text" class="form-control" id="edit_product_name" required>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="edit_product_description">Description</label>
+                                        <textarea class="form-control" id="edit_product_description" rows="3"></textarea>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="edit_product_price">Price *</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-addon">$</span>
+                                                    <input type="number" class="form-control" id="edit_product_price" step="0.01" min="0" required>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="edit_quantity">Quantity</label>
+                                                <input type="number" class="form-control" id="edit_quantity" min="1" value="1">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="edit_category">Category</label>
+                                        <input type="text" class="form-control" id="edit_category">
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-success" id="save-item-changes-btn">
+                                    <i class="fa fa-save"></i> Save Changes
+                                </button>
+                                <button type="button" class="btn btn-default" data-dismiss="modal">
+                                    <i class="fa fa-times"></i> Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
 
             <!-- ACTIONS TAB -->
             <div class="tab-pane fade" id="actions" role="tabpanel" aria-labelledby="actions-tab">
                 <div class="section-header">
-                    <h3><i class="glyphicon glyphicon-cog"></i> Wishlist Actions</h3>
+                    <h3><i class="fa fa-cog"></i> Wishlist Actions</h3>
                     <p>Perform bulk operations and special actions</p>
                 </div>
                 
@@ -472,13 +630,13 @@
                         <input type="text" class="form-control" id="action_wishlist_id" placeholder="Enter wishlist ID" required>
                     </div>
                     <button type="button" class="btn btn-success" id="make-public-btn">
-                        <i class="glyphicon glyphicon-globe"></i> Make Public
+                        <i class="fa fa-globe"></i> Make Public
                     </button>
                     <button type="button" class="btn btn-warning" id="make-private-btn">
-                        <i class="glyphicon glyphicon-lock"></i> Make Private
+                        <i class="fa fa-lock"></i> Make Private
                     </button>
                     <button type="button" class="btn btn-info" id="query-status-btn">
-                        <i class="glyphicon glyphicon-question-sign"></i> Query Status
+                        <i class="fa fa-question-circle"></i> Query Status
                     </button>
                 </form>
                 <div id="action-status-result" style="margin-top:15px;"></div>
