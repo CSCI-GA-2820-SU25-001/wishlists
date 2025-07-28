@@ -24,6 +24,7 @@ import requests
 from compare3 import expect
 from behave import given  # pylint: disable=no-name-in-module
 
+# pylint: disable=function-redefined
 # HTTP Return Codes
 HTTP_200_OK = 200
 HTTP_201_CREATED = 201
@@ -33,7 +34,7 @@ WAIT_TIMEOUT = 60
 
 
 @given("the following wishlists")
-def step_impl(context):
+def step_impl(context):  # noqa: F811
     """Delete all Wishlists and load new ones from data table"""
 
     # Get a list of all wishlists
@@ -61,7 +62,7 @@ def step_impl(context):
 
 
 @given('a wishlist named "{name}" already exists for customer "{customer_id}"')
-def step_impl(context, name, customer_id):
+def step_impl(context, name, customer_id):  # noqa: F811
     """
     Creates a single wishlist directly via the API to set up the test condition.
     """

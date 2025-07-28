@@ -22,8 +22,7 @@ This file only contains custom business logic error handlers.
 """
 
 from flask import current_app as app  # Import Flask application
-from service.wishlist import DataValidationError
-from . import status
+from service.common import status
 
 # NOTE: We can't import api here due to circular imports, so we register
 # these in routes.py instead. This file is kept minimal since Flask-RESTX

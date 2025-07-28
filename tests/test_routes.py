@@ -245,7 +245,9 @@ class TestWishlistService(TestCase):
         self.assertEqual(data["product_name"], wishlist_item.product_name)
         self.assertEqual(data["product_description"], wishlist_item.product_description)
         self.assertEqual(data["quantity"], wishlist_item.quantity)
-        self.assertEqual(str(data["product_price"]), str(wishlist_item.product_price))
+        self.assertEqual(
+            float(data["product_price"]), float(wishlist_item.product_price)
+        )
 
     def test_get_wishlist_item_not_found(self):
         """It should not Get an item that is not found"""
