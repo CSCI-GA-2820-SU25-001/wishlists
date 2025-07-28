@@ -95,7 +95,7 @@ $(function () {
     function check_duplicate_wishlist(customerId, wishlistName, callback) {
         const ajax_check = $.ajax({
             type: "GET",
-            url: `/wishlists?customer_id=${encodeURIComponent(customerId)}`,
+            url: `/api/wishlists?customer_id=${encodeURIComponent(customerId)}`,
             contentType: "application/json",
         });
 
@@ -188,7 +188,7 @@ $(function () {
         // Make API call
         const ajax = $.ajax({
             type: "POST",
-            url: "/wishlists",
+            url: "/api/wishlists",
             contentType: "application/json",
             data: JSON.stringify(data),
         });
@@ -256,7 +256,7 @@ $(function () {
 
         const ajax = $.ajax({
             type: "GET",
-            url: `/wishlists/${wishlist_id}`,
+            url: `/api/wishlists/${wishlist_id}`,
             contentType: "application/json"
         });
 
@@ -309,7 +309,7 @@ $(function () {
 
         const ajax = $.ajax({
             type: "GET",
-            url: `/wishlists${queryString}`,
+            url: `/api/wishlists${queryString}`,
             contentType: "application/json"
         });
 
@@ -334,7 +334,7 @@ $(function () {
 
         const ajax = $.ajax({
             type: "GET",
-            url: "/wishlists",
+            url: "/api/wishlists",
             contentType: "application/json"
         });
 
@@ -381,7 +381,7 @@ $(function () {
 
         $.ajax({
             type: "POST",
-            url: `/wishlists/${wishlistId}/publish`,  // :contentReference[oaicite:0]{index=0}
+            url: `/api/wishlists/${wishlistId}/publish`,  // :contentReference[oaicite:0]{index=0}
             contentType: "application/json"
         })
         .done(function (res) {
@@ -414,7 +414,7 @@ $(function () {
 
         $.ajax({
             type: "POST",
-            url: `/wishlists/${wishlistId}/unpublish`,  // :contentReference[oaicite:1]{index=1}
+            url: `/api/wishlists/${wishlistId}/unpublish`,  // :contentReference[oaicite:1]{index=1}
             contentType: "application/json"
         })
         .done(function (res) {
@@ -447,7 +447,7 @@ $(function () {
 
         $.ajax({
             type: "GET",
-            url: `/wishlists/${wishlistId}`,  // :contentReference[oaicite:2]{index=2}
+            url: `/api/wishlists/${wishlistId}`,  // :contentReference[oaicite:2]{index=2}
             contentType: "application/json"
         })
         .done(function (res) {
@@ -582,7 +582,7 @@ $(function () {
 
         const ajax = $.ajax({
             type: "GET",
-            url: `/wishlists${queryString}`,
+            url: `/api/wishlists${queryString}`,
             contentType: "application/json"
         });
 
@@ -653,7 +653,7 @@ $(function () {
 
         const ajax = $.ajax({
             type: "PUT",
-            url: `/wishlists/${wishlist_id}`,
+            url: `/api/wishlists/${wishlist_id}`,
             contentType: "application/json",
             data: JSON.stringify(data),
         });
@@ -756,7 +756,7 @@ $(function () {
 
         const ajax = $.ajax({
             type: "GET",
-            url: `/wishlists?customer_id=${encodeURIComponent(customer_id)}`,
+            url: `/api/wishlists?customer_id=${encodeURIComponent(customer_id)}`,
             contentType: "application/json"
         });
 
@@ -803,7 +803,7 @@ $(function () {
         
         const ajax = $.ajax({
             type: "GET",
-            url: `/wishlists/${wishlist_id}`,
+            url: `/api/wishlists/${wishlist_id}`,
             contentType: "application/json"
         });
 
@@ -827,7 +827,7 @@ $(function () {
     function load_wishlist_items_for_delete(wishlist_id) {
         const ajax = $.ajax({
             type: "GET",
-            url: `/wishlists/${wishlist_id}/items`,
+            url: `/api/wishlists/${wishlist_id}/items`,
             contentType: "application/json"
         });
 
@@ -876,7 +876,7 @@ $(function () {
         
         const ajax = $.ajax({
             type: "DELETE",
-            url: `/wishlists/${selectedWishlistForDelete}`,
+            url: `/api/wishlists/${selectedWishlistForDelete}`,
             contentType: "application/json"
         });
 
