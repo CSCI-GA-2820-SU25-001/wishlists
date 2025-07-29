@@ -37,13 +37,16 @@ def create_app():
     # Initialize Plugins
     # pylint: disable=import-outside-toplevel
     from service.wishlist import db
+
     db.init_app(app)
 
     with app.app_context():
         # Dependencies require we import the routes AFTER the Flask app is created
         # pylint: disable=wrong-import-position, wrong-import-order, unused-import
         from service import routes  # noqa: F401 E402
-        from service.common import error_handlers, cli_commands  # noqa: F401, E402
+
+        # REMOVED: error_handlers import - Flask-RESTX handles most errors automatically
+        from service.common import cli_commands  # noqa: F401, E402
 
         try:
             db.create_all()
@@ -56,7 +59,9 @@ def create_app():
         log_handlers.init_logging(app, "gunicorn.error")
 
         app.logger.info(70 * "*")
-        app.logger.info("  S E R V I C E   R U N N I N G  ".center(70, "*"))
+        app.logger.info(
+            "  W I S H L I S T   S E R V I C E   R U N N I N G  ".center(70, "*")
+        )
         app.logger.info(70 * "*")
 
         app.logger.info("Service initialized!")
