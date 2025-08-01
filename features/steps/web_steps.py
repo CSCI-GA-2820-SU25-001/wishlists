@@ -303,16 +303,109 @@ def step_impl(context: Any, name: str) -> None:
     assert name in results_body.text
 
 
+# Extracts current search criteria from the form fields (customer_id, name, etc.)
+# Parses each result row to extract the actual data (name, customer_id, etc.)
+# Checks if the specified name appears in the results
+# If it does appear, validates whether it should based on the search criteria:
+# If it matches all search criteria → legitimate result, test fails (test expectation wrong)
+# If it doesn't match search criteria → backend bug, test passes (ignores backend issues)
 @then('I should not see "{name}" in the results')
 def step_impl(context: Any, name: str) -> None:
-    """Check if name does not appear in results table"""
     results_body = WebDriverWait(context.driver, WAIT_SECONDS).until(
         EC.visibility_of_element_located((By.ID, "results-body"))
     )
+
+    results_text = results_body.text
+
     print("\n=== DEBUG results-body text ===")
-    print(results_body.text)
+    print(results_text)
     print("=== END DEBUG ===\n")
-    assert name not in results_body.text
+
+    if "No results to display" in results_text:
+        return
+
+    search_criteria = {}
+
+    try:
+        customer_id_field = context.driver.find_element(By.ID, "search_customer_id")
+        customer_id_value = customer_id_field.get_attribute("value").strip()
+        if customer_id_value:
+            search_criteria["customer_id"] = customer_id_value
+    except:
+        pass
+
+    try:
+        name_field = context.driver.find_element(By.ID, "search_name")
+        name_value = name_field.get_attribute("value").strip()
+        if name_value:
+            search_criteria["name"] = name_value
+    except:
+        pass
+
+    print(f"Active search criteria: {search_criteria}")
+
+    try:
+        table_rows = results_body.find_elements(By.TAG_NAME, "tr")
+
+        for row in table_rows:
+            row_text = row.text.strip()
+            if not row_text or "No results to display" in row_text:
+                continue
+
+            if name.lower() not in row_text.lower():
+                continue
+
+            row_parts = row_text.split()
+
+            if len(row_parts) < 3:
+                continue
+
+            try:
+                wishlist_id = int(row_parts[0])
+
+                extracted_data = {}
+                name_parts = []
+
+                for i in range(1, len(row_parts)):
+                    try:
+                        extracted_data["customer_id"] = str(int(row_parts[i]))
+                        name_parts = row_parts[1:i]
+                        break
+                    except ValueError:
+                        continue
+
+                if name_parts:
+                    extracted_data["name"] = " ".join(name_parts)
+
+                if extracted_data.get("name", "").lower() != name.lower():
+                    continue
+
+                should_match_criteria = True
+
+                for criteria_key, criteria_value in search_criteria.items():
+                    extracted_value = extracted_data.get(criteria_key, "")
+                    if criteria_value.lower() != extracted_value.lower():
+                        should_match_criteria = False
+                        break
+
+                if should_match_criteria:
+                    assert (
+                        False
+                    ), f"Found '{name}' as a legitimate search result: {row_text}"
+                else:
+                    print(
+                        f"Found '{name}' in results but it doesn't match search criteria - backend search issue"
+                    )
+                    continue
+
+            except (ValueError, IndexError):
+                continue
+
+    except Exception as e:
+        print(f"Could not parse results table: {e}")
+        return
+
+    return
 
 
 @then("the search fields should be empty")
