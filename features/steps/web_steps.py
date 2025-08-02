@@ -25,6 +25,7 @@ For information on Waiting until elements are present in the HTML see:
     https://selenium-python.readthedocs.io/waits.html
 """
 import re
+import time
 from typing import Any
 from behave import when, then  # pylint: disable=no-name-in-module
 from selenium.webdriver.common.by import By
@@ -109,7 +110,34 @@ def save_screenshot(context: Any, filename: str) -> None:
 @when('I visit the "Home Page"')
 def step_impl(context: Any) -> None:
     """Make a call to the base URL"""
-    context.driver.get(context.base_url)
+    # Retry mechanism for page loading
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            context.driver.get(context.base_url)
+
+            # Wait for the page to be fully loaded
+            WebDriverWait(context.driver, WAIT_SECONDS).until(
+                lambda driver: driver.execute_script("return document.readyState")
+                == "complete"
+            )
+
+            # Wait for the main elements to be present
+            WebDriverWait(context.driver, WAIT_SECONDS).until(
+                EC.presence_of_element_located((By.ID, "adminTabs"))
+            )
+
+            # If we get here, the page loaded successfully
+            break
+
+        except Exception as e:
+            if attempt == max_retries - 1:
+                # Last attempt failed, re-raise the exception
+                raise e
+            else:
+                # Wait a bit before retrying
+                time.sleep(2)
+                continue
 
 
 @when('I click the "{tab_name}" tab')
