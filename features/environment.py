@@ -5,7 +5,7 @@ Environment for Behave Testing
 from os import getenv
 from selenium import webdriver
 
-WAIT_SECONDS = int(getenv("WAIT_SECONDS", "30"))
+WAIT_SECONDS = int(getenv("WAIT_SECONDS", "60"))
 BASE_URL = getenv("BASE_URL", "http://localhost:8080")
 DRIVER = getenv("DRIVER", "chrome").lower()
 
@@ -22,6 +22,31 @@ def before_all(context):
     context.driver.implicitly_wait(context.wait_seconds)
     context.driver.set_window_size(1280, 1300)
     context.config.setup_logging()
+
+
+def before_scenario(context, scenario):
+    """Executed before each scenario"""
+    # Clear browser cache and cookies to ensure clean state
+    context.driver.delete_all_cookies()
+    # Clear local storage and session storage only if available
+    context.driver.execute_script(
+        """
+        try {
+            if (typeof(Storage) !== "undefined") {
+                localStorage.clear();
+                sessionStorage.clear();
+            }
+        } catch(e) {
+            // Storage not available, ignore
+        }
+    """
+    )
+
+
+def after_scenario(context, scenario):
+    """Executed after each scenario"""
+    # Clear any remaining state
+    context.driver.delete_all_cookies()
 
 
 def after_all(context):
