@@ -52,5 +52,22 @@ spec:
       workspaces:
         - name: output
           workspace: pipeline-workspace
+    - name: testing
+      runAfter: 
+        - git-clone
+      taskRef:
+        kind: Task
+        name: pytest-env
+      params:
+        - name: pytest-args
+          value: []
+        - name: secret-name
+          value: postgres-creds
+        - name: secret-key
+          value: database_uri
+      workspace:
+        - name: source
+          workspace: pipeline-workspace
   workspaces:
     - name: pipeline-workspace
+  finally: []
