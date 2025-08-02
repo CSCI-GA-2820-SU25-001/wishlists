@@ -1,0 +1,15 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: cd-pipeline
+spec:
+  params:
+    - description: The URL of the Git repository
+      name: GIT_REPO
+      type: string
+    - default: master
+      description: The reference (branch or ref)
+      name: GIT_REF
+      type: string
+  workspaces:
+    - name: pipeline-workspace
