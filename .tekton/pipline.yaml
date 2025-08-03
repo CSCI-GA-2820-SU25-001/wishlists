@@ -115,7 +115,7 @@ spec:
         - name: VERBOSE
           value: 'false'
       runAfter:
-        - pytest-env
+        - testing
         - pylint
       taskRef:
         kind: Task
