@@ -11,6 +11,8 @@ spec:
       description: The reference (branch or ref)
       name: GIT_REF
       type: string
+  workspaces:
+    - name: pipeline-workspace
   tasks:
     - name: git-clone
       params:
@@ -43,7 +45,8 @@ spec:
         - name: verbose
           value: 'true'
         - name: gitInitImage
-          value: 'gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/git-init:v0.40.2'
+          value: >-
+            gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/git-init:v0.40.2
         - name: userHome
           value: /home/git
       taskRef:
@@ -52,8 +55,26 @@ spec:
       workspaces:
         - name: output
           workspace: pipeline-workspace
+    - name: pylint
+      params:
+        - name: image
+          value: 'quay.io/rofrano/python:3.11-slim'
+        - name: path
+          value: service
+        - name: args
+          value: []
+        - name: requirements-file
+          value: requirements.txt
+      runAfter:
+        - git-clone
+      taskRef:
+        kind: Task
+        name: pylint
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
     - name: testing
-      runAfter: 
+      runAfter:
         - git-clone
       taskRef:
         kind: Task
@@ -103,6 +124,3 @@ spec:
         - name: source
           workspace: pipeline-workspace
 
-  workspaces:
-    - name: pipeline-workspace
-  finally: []
