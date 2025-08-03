@@ -1,0 +1,15 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: bdd-tests
+spec:
+  workspaces:
+    - name: source
+  steps:
+    - name: run-bdd-tests
+      image: python:3.11
+      workingDir: /workspace/source
+      script: |
+        pip install -r requirements.txt || pip install .
+        pip install behave
+        behave features/
