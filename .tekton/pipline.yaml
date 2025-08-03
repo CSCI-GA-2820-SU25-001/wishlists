@@ -4,12 +4,20 @@ metadata:
   name: cd-pipeline
 spec:
   params:
-    - description: The URL of the Git repository
+    - description: The URL to the git repo
       name: GIT_REPO
       type: string
     - default: master
       description: The reference (branch or ref)
       name: GIT_REF
+      type: string
+    - default: wishlists
+      description: Name of the application
+      name: APP_NAME
+      type: string
+    - default: 'image-registry.openshift-image-registry.svc:5000/$(context.pipelineRun.namespace)/$(params.APP_NAME):latest'
+      description: The name of the image to build
+      name: IMAGE_NAME
       type: string
   workspaces:
     - name: pipeline-workspace
@@ -96,8 +104,7 @@ spec:
         - name: DOCKERFILE
           value: ./Dockerfile
         - name: BUILD_ARGS
-          value:
-            - ''
+          value: []
         - name: CONTEXT
           value: .
         - name: STORAGE_DRIVER
@@ -115,25 +122,18 @@ spec:
         - name: VERBOSE
           value: 'false'
       runAfter:
-        - pytest-env
         - pylint
+        - testing
       taskRef:
-        kind: Task
-        name: buildah
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: buildah-1-19-0
+          - name: namespace
+            value: openshift-pipelines
+        resolver: cluster
       workspaces:
         - name: source
           workspace: pipeline-workspace
-    - name: deploy-image
-      params:
-        - name: image-name
-          value: $(params.IMAGE_NAME)
-        - name: manifest-dir
-          value: k8s
-      runAfter:
-        - buildah
-      taskRef:
-        kind: Task
-        name: deploy-image
-      workspaces:
-        - name: source
-          workspace: pipeline-workspace
+          
