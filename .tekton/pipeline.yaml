@@ -150,6 +150,24 @@ spec:
       workspaces:
         - name: source
           workspace: pipeline-workspace
+    - name: behave
+      params:
+        - name: base-url
+          value: 'https://cd-pipeline-aa13585001002-dev.apps.rm2.thpm.p1.openshiftapps.com/'
+        - name: wait-seconds
+          value: '60'
+        - name: driver
+          value: chrome
+      runAfter:
+        - deploy-image
+      taskRef:
+        kind: Task
+        name: behave
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+        - name: pipeline-workspace
+        
 
     
 
