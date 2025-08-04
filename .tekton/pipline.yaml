@@ -143,7 +143,7 @@ spec:
         - name: manifest-dir
           value: k8s
       runAfter:
-        - buildah-1-19-0
+        - buildah
       taskRef:
         kind: Task
         name: deploy-image
