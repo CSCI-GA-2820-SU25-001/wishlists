@@ -127,10 +127,10 @@ spec:
           poetry install --no-dev
         elif [ -e "Pipfile" ]; then
           echo "Found Pipfile file: using pipenv ..."
-          python -m pip install --upgrade pipenv
-          pipenv install --system --deploy
+          python -m pip install --upgrade pip pipenv
+          pipenv install --system --dev
         elif [ -e "requirements.txt" ]; then
-          python -m pip install --upgrade -r requirements.txt
+          python -m pip install --user -r requirements.txt
         fi
 
         # Install pytest if not already installed
