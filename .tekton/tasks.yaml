@@ -45,26 +45,26 @@ spec:
         export PATH=$PATH:$HOME/.local/bin:
 
         echo "***** Installing dependencies *****"
+        python -m pip install --upgrade pip setuptools wheel
+        
         if [ -e "poetry.lock" ]; then
           echo "Found poetry.lock file: using poetry ..."
-          python -m pip install --upgrade pip poetry
+          python -m pip install --upgrade poetry
           poetry config virtualenvs.create false
-          poetry install
+          poetry install --no-dev
         elif [ -e "Pipfile" ]; then
           echo "Found Pipfile file: using pipenv ..."
-          python -m pip install --upgrade pip pipenv
-          pipenv install --system --dev
+          python -m pip install --upgrade pipenv
+          pipenv install --system --deploy
         elif [ -n "$(params.requirements-file)" ] && [ -e "$(params.requirements-file)" ]; then
-          python -m pip install --user -r "$(params.requirements-file)"
+          python -m pip install --upgrade -r "$(params.requirements-file)"
         fi
 
-        # Make sure pylint is installed
-        python -m pip install pylint
+        # Install pylint if not already installed
+        python -m pip install --upgrade pylint
 
         echo "***** Running Linting *****"
-        pylint $@ "$(params.path)"
-      args:
-        - "$(params.args)"
+        pylint $(params.args[*]) "$(params.path)"
 
 ---
 apiVersion: tekton.dev/v1beta1
@@ -118,27 +118,27 @@ spec:
         export PATH=$PATH:$HOME/.local/bin:
 
         echo "***** Installing dependencies *****"
+        python -m pip install --upgrade pip setuptools wheel
+        
         if [ -e "poetry.lock" ]; then
           echo "Found poetry.lock file: using poetry ..."
-          python -m pip install --upgrade pip poetry
+          python -m pip install --upgrade poetry
           poetry config virtualenvs.create false
-          poetry install
+          poetry install --no-dev
         elif [ -e "Pipfile" ]; then
           echo "Found Pipfile file: using pipenv ..."
           python -m pip install --upgrade pip pipenv
           pipenv install --system --dev
-        elif -e "requirements.txt" ]; then
+        elif [ -e "requirements.txt" ]; then
           python -m pip install --user -r requirements.txt
         fi
 
-        # Make sure pylint is installed
-        python -m pip install pytest
+        # Install pytest if not already installed
+        python -m pip install --upgrade pytest
 
         echo "***** Running Tests *****"
         pytest --version
-        pytest
-      args:
-        - "$(params.pytest-args)"
+        pytest $(params.pytest-args[*])
 
 ---
 apiVersion: tekton.dev/v1beta1
@@ -177,7 +177,7 @@ spec:
           #!/bin/bash
           set -e
 
-          echo Applying manifests in $(inputs.params.manifest-dir) directory
+          echo Applying manifests in $(params.manifest-dir) directory
 
           echo "**********************************************************************"
           echo "Installing YQ..."
@@ -186,15 +186,15 @@ spec:
           chmod a+x /usr/bin/yq
 
           echo "*********************  DEPLOYMENT  ***********************"
-          echo "Deploying $(inputs.params.image-name) ..."
+          echo "Deploying $(params.image-name) ..."
 
-          yq -e -i '.spec.template.spec.containers[0].image="$(inputs.params.image-name)"' $(inputs.params.manifest-dir)/deployment.yaml
-          cat $(inputs.params.manifest-dir)/deployment.yaml
+          yq -e -i '.spec.template.spec.containers[0].image="$(params.image-name)"' $(params.manifest-dir)/deployment.yaml
+          cat $(params.manifest-dir)/deployment.yaml
 
           echo "************************************************************"
           echo "OC APPLY..."
-          oc apply -f $(inputs.params.manifest-dir)/deployment.yaml
-          oc apply -f $(inputs.params.manifest-dir)/service.yaml
+          oc apply -f $(params.manifest-dir)/deployment.yaml
+          oc apply -f $(params.manifest-dir)/service.yaml
 
           echo "************************************************************"
           sleep 3
@@ -232,8 +232,8 @@ spec:
       command: ["/bin/bash", "-c"]
       args:
         - |-
-          echo Applying manifests in $(inputs.params.manifest-dir) directory
-          oc apply -f $(inputs.params.manifest-dir)
+          echo Applying manifests in $(params.manifest-dir) directory
+          oc apply -f $(params.manifest-dir)
           echo -----------------------------------
 
 ---
