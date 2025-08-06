@@ -25,6 +25,15 @@ A RESTful microservice for managing customer wishlists allows customers to creat
 - Delete the whole wishlists
 - List certain items in wishlists
 - List the whole wishlists
+- Real-time filtering of wishlists and wishlist items
+- Clear all items from a wishlist
+- Visibility setting for wishlists (public/private)
+- Swagger UI documentation via Flask-RESTX at `/apidocs`
+- Health check endpoint at `/health` for Kubernetes readiness probes
+- Automated CI/CD pipeline with:
+  - GitHub Actions for continuous integration
+  - Tekton Pipelines on OpenShift for continuous delivery
+  - Automatic testing, linting, container builds, and deployment to Kubernetes
 
 ## API Endpoints
 
@@ -81,6 +90,16 @@ tests/                     - test cases package
 ├── test_cli_commands.py   - test suite for the CLI
 ├── test_models.py         - test suite for business models
 └── test_routes.py         - test suite for service routes
+
+k8s/                       - Kubernetes deployment manifests
+├── deployment.yaml        - Deployment spec with rolling updates and readiness probe
+├── service.yaml           - ClusterIP service exposing the app on port 8080
+└── ingress.yaml           - Ingress routing HTTP traffic to the service
+└── postgres/              - Manifest(s) for deploying PostgreSQL database
+
+.tekton/                   - Tekton CI/CD pipeline configuration
+├── bdd-task.yaml          - Custom Tekton task to run BDD tests via `behave`
+└── pipeline.yaml          - Pipeline combining tasks for linting, testing, and deployment
 ```
 ### Query Examples
 
@@ -191,6 +210,47 @@ pytest tests/test_routes.py
 5. **Run linting**
 ```bash
 make lint
+```
+
+## Swagger API Documentation
+
+After running the app, access the interactive Swagger documentation at:
+
+```bash
+http://localhost:8080/apidocs
+```
+
+This provides a complete list of all endpoints and their request/response schemas using Flask-RESTX.
+
+## CI/CD
+
+## 1. GitHub Actions
+
+- CI is integrated with GitHub Actions to:
+- Run unit tests
+- Lint using pylint and flake8
+- Ensure code coverage is 95%+
+- Upload results to Codecov
+- Display status badges on the README
+  
+## 2. Tekton Pipeline
+
+- A webhook in GitHub triggers the pipeline on code push
+- In .tekton/ directory:
+- bdd-task.yaml runs BDD tests
+- pipeline.yaml automates the full CI/CD pipeline
+
+## Kubernetes Deployment
+Kubernetes manifests are under k8s/ and include:
+
+- deployment.yaml — Deploys the service container with readiness probe to /health
+- service.yaml — Exposes the app as a ClusterIP service on port 8080
+- ingress.yaml — Routes incoming HTTP traffic to the service at /
+- postgres/ — Contains the manifest to deploy a PostgreSQL database used by the service backend
+
+Use the following to apply:
+```bash
+kubectl apply -f k8s/
 ```
 
 ## License
