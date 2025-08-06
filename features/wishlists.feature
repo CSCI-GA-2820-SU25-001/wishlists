@@ -10,6 +10,7 @@ Feature: Wishlist Management
             | Kitchen Appliances| 456         | New kitchen items  | False     |
         When I visit the "Home Page"
 
+    # Create
     Scenario: Create a new wishlist
         When I set the "Name" to "Birthday List"
         And I set the "Customer Id" to "789"
@@ -36,6 +37,22 @@ Feature: Wishlist Management
         And I press the "Create" button
         Then I should see the message "Please fill in the following required fields"
 
+    # Read
+    Scenario: Retrieve a specific wishlist
+        When I click the "View" tab
+        And I set the "Name" to "Holiday Shopping"
+        And I press the "Search" button
+        Then I should see the message "Success"
+        And I should see "Holiday Shopping" in the results
+        And I should see "Christmas gifts" in the results
+
+    Scenario: Attempt to retrieve a non-existent wishlist
+        When I click the "View" tab
+        And I set the "Customer Id" to "999"
+        And I press the "Search" button
+        Then I should see the message "Success"
+
+    # List
     Scenario: View and search wishlists
         When I click the "View" tab
         And I press the "List All" button
@@ -43,6 +60,7 @@ Feature: Wishlist Management
         And I should see "Holiday Shopping" in the results
         And I should see "Kitchen Appliances" in the results
 
+    # Query
     Scenario: Search for wishlists by customer
         When I click the "View" tab
         And I set the "Customer Id" to "123"
@@ -66,6 +84,7 @@ Feature: Wishlist Management
         And I should see "Holiday Shopping" in the results
         And I should not see "Kitchen Appliances" in the results
 
+    # Clear
     Scenario: Clear search results
         When I click the "View" tab
         And I set the "Name" to "Holiday Shopping"
@@ -75,6 +94,7 @@ Feature: Wishlist Management
         Then the search fields should be empty
         And the results table should show "No results to display"
 
+    # Invalid
     Scenario: Show validation error when Customer ID is invalid
         When I click the "View" tab
         And I enter "!!@" in the Customer ID search field
@@ -87,13 +107,14 @@ Feature: Wishlist Management
         And I press the "Search" button
         Then the Wishlist Name field should show a validation error
 
+    # Delete
     Scenario: Look up wishlists for deletion
         When I click the "Delete" tab
         And I enter "123" in the delete Customer ID field
         And I press the "Lookup" button
         Then I should see the message "Success"
 
-    Scenario: Attempt to delete a non-existent wishlist  
+    Scenario: Attempt to delete a non-existent wishlist
         When I click the "Delete" tab
         And I enter "999" in the delete Customer ID field
         And I press the "Lookup" button
@@ -103,4 +124,26 @@ Feature: Wishlist Management
         When I click the "Delete" tab
         And I press the "Lookup" button
         Then I should see the message "Please enter a Customer ID"
-        
+
+    # Update
+    Scenario: Update wishlist description and visibility
+        When I click the "Update" tab
+        And I set the "Customer Id" to "123"
+        And I set the "Name" to "Holiday Shopping"
+        And I press the "Load" button
+        And I set the "Description" to "Updated Christmas gift ideas"
+        And I select "Private" in the "Visibility" dropdown
+        And I click the Save Changes button
+        Then I should see the message "Success"
+    
+    #Action
+    Scenario: Toggle wishlist visibility to private
+        When I set the "Name" to "Action Test List"
+        And I set the "Customer Id" to "888"
+        And I select "Public" in the "Visibility" dropdown
+        And I press the "Create" button
+        Then I should see the message "Success"
+        When I click the "View" tab
+        And I set the "Name" to "Action Test List"
+        And I press the "Search" button
+        Then I should see the message "Success"
