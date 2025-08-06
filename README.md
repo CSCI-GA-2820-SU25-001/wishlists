@@ -95,6 +95,7 @@ k8s/                       - Kubernetes deployment manifests
 ├── deployment.yaml        - Deployment spec with rolling updates and readiness probe
 ├── service.yaml           - ClusterIP service exposing the app on port 8080
 └── ingress.yaml           - Ingress routing HTTP traffic to the service
+└── postgres/              - Manifest(s) for deploying PostgreSQL database
 
 .tekton/                   - Tekton CI/CD pipeline configuration
 ├── bdd-task.yaml          - Custom Tekton task to run BDD tests via `behave`
@@ -245,6 +246,7 @@ Kubernetes manifests are under k8s/ and include:
 - deployment.yaml — Deploys the service container with readiness probe to /health
 - service.yaml — Exposes the app as a ClusterIP service on port 8080
 - ingress.yaml — Routes incoming HTTP traffic to the service at /
+- postgres/ — Contains the manifest to deploy a PostgreSQL database used by the service backend
 
 Use the following to apply:
 ```bash
