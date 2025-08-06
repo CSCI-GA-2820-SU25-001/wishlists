@@ -3,6 +3,21 @@ kind: Pipeline
 metadata:
   name: cd-pipeline
 spec:
+  finally:
+    - name: behave
+      params:
+        - name: base-url
+          value: 'https://wishlist-wl955-dev.apps.rm2.thpm.p1.openshiftapps.com'
+        - name: wait-seconds
+          value: '60'
+        - name: driver
+          value: chrome
+      taskRef:
+        kind: Task
+        name: behave
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
   params:
     - description: The URL to the git repo
       name: GIT_REPO
@@ -19,47 +34,48 @@ spec:
       description: The name of the image to build
       name: IMAGE_NAME
       type: string
-  workspaces:
-    - name: pipeline-workspace
   tasks:
-    - name: git-clone
+    - name: git-clone-1-19-0
       params:
-        - name: url
-          value: $(params.GIT_REPO)
-        - name: revision
-          value: $(params.GIT_REF)
-        - name: refspec
-          value: ''
-        - name: submodules
-          value: 'true'
-        - name: depth
-          value: '1'
-        - name: sslVerify
-          value: 'true'
-        - name: crtFileName
+        - name: CRT_FILENAME
           value: ca-bundle.crt
-        - name: subdirectory
+        - name: HTTP_PROXY
           value: ''
-        - name: sparseCheckoutDirectories
+        - name: HTTPS_PROXY
           value: ''
-        - name: deleteExisting
-          value: 'true'
-        - name: httpProxy
+        - name: NO_PROXY
           value: ''
-        - name: httpsProxy
+        - name: SUBDIRECTORY
           value: ''
-        - name: noProxy
-          value: ''
-        - name: verbose
-          value: 'true'
-        - name: gitInitImage
-          value: >-
-            gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/git-init:v0.40.2
-        - name: userHome
+        - name: USER_HOME
           value: /home/git
+        - name: DELETE_EXISTING
+          value: 'true'
+        - name: VERBOSE
+          value: 'false'
+        - name: SSL_VERIFY
+          value: 'false'
+        - name: URL
+          value: $(params.GIT_REPO)
+        - name: REVISION
+          value: $(params.GIT_REF)
+        - name: REFSPEC
+          value: ''
+        - name: SUBMODULES
+          value: 'true'
+        - name: DEPTH
+          value: '1'
+        - name: SPARSE_CHECKOUT_DIRECTORIES
+          value: ''
       taskRef:
-        kind: Task
-        name: git-clone
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: git-clone-1-19-0
+          - name: namespace
+            value: openshift-pipelines
+        resolver: cluster
       workspaces:
         - name: output
           workspace: pipeline-workspace
@@ -68,25 +84,20 @@ spec:
         - name: image
           value: 'quay.io/rofrano/python:3.11-slim'
         - name: path
-          value: service
+          value: .
         - name: args
           value: []
         - name: requirements-file
           value: requirements.txt
       runAfter:
-        - git-clone
+        - git-clone-1-19-0
       taskRef:
         kind: Task
         name: pylint
       workspaces:
         - name: source
           workspace: pipeline-workspace
-    - name: testing
-      runAfter:
-        - git-clone
-      taskRef:
-        kind: Task
-        name: pytest-env
+    - name: pytest-env
       params:
         - name: pytest-args
           value: []
@@ -94,10 +105,15 @@ spec:
           value: postgres-creds
         - name: secret-key
           value: database_uri
+      runAfter:
+        - git-clone-1-19-0
+      taskRef:
+        kind: Task
+        name: pytest-env
       workspaces:
         - name: source
           workspace: pipeline-workspace
-    - name: buildah
+    - name: buildah-1-19-0
       params:
         - name: IMAGE
           value: $(params.IMAGE_NAME)
@@ -123,7 +139,7 @@ spec:
           value: 'false'
       runAfter:
         - pylint
-        - testing
+        - pytest-env
       taskRef:
         params:
           - name: kind
@@ -143,32 +159,12 @@ spec:
         - name: manifest-dir
           value: k8s
       runAfter:
-        - buildah
+        - buildah-1-19-0
       taskRef:
         kind: Task
         name: deploy-image
       workspaces:
         - name: source
           workspace: pipeline-workspace
-    - name: behave
-      params:
-        - name: base-url
-          value: 'https://cd-pipeline-aa13585001002-dev.apps.rm2.thpm.p1.openshiftapps.com/'
-        - name: wait-seconds
-          value: '60'
-        - name: driver
-          value: chrome
-      runAfter:
-        - deploy-image
-      taskRef:
-        kind: Task
-        name: behave
-      workspaces:
-        - name: source
-          workspace: pipeline-workspace
-        - name: pipeline-workspace
-        
-
-    
-
-          
+  workspaces:
+    - name: pipeline-workspace
