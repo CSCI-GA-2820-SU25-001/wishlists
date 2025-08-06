@@ -15,6 +15,7 @@
 ######################################################################
 
 # pylint: disable=function-redefined, missing-function-docstring
+# pylint: disable-all
 # flake8: noqa
 """
 Web Steps

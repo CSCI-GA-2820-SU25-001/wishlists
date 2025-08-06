@@ -1,3 +1,4 @@
+# pylint: disable=unused-argument
 """
 Environment for Behave Testing
 """
