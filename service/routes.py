@@ -14,6 +14,7 @@
 # limitations under the License.
 ######################################################################
 
+# pylint: disable=duplicate-code, too-many-lines
 """
 Wishlist Service with Swagger
 
